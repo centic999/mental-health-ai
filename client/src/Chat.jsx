@@ -26,9 +26,7 @@ function Chat({ chat, updateChat }) {
     setIsTyping(true);
 
     try {
-      const res = await axios.post('http://localhost:8000/chat', {
-        messages: newMessages
-      });
+      const res = await axios.post('https://mental-health-ai-wivn.onrender.com/chat', {messages: newMessages});
 
       const reply = res.data.response;
       updateChat(chat.id, [...newMessages, { role: "assistant", content: reply }]);
