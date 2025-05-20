@@ -112,7 +112,7 @@ function Chat({ chat, updateChat }) {
             color: '#caffd4',
             animation: 'fadeInUp 0.4s ease-in-out'
           }}>
-            <strong>AI:</strong>
+            <strong>SafeCoach:</strong>
             <div style={{ marginTop: '0.5rem', fontSize: '1.25rem', letterSpacing: '2px' }}>
               <span className="dot">.</span>
               <span className="dot">.</span>
