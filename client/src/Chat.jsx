@@ -90,7 +90,7 @@ function Chat({ chat, updateChat }) {
               }}
             >
               <strong style={{ color: msg.role === 'user' ? '#73b1ff' : '#72ffaf' }}>
-                {msg.role === 'user' ? 'You' : 'AI'}:
+                {msg.role === 'user' ? 'You' : 'SafeCoach'}:
               </strong>
               <div style={{ marginTop: '0.5rem' }}>
                 {msg.role === 'assistant' ? formatAiMessage(msg.content) : msg.content}
