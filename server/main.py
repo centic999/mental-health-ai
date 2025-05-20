@@ -47,6 +47,7 @@ COHERE_API_KEY = "T1nj0ddEblCtAaWlbsvlOrimidAKfiWCZH4l0ZCd"
 async def chat(request: Request):
     data = await request.json()
     messages = data.get("messages", [])
+    user_id = data.get("user_id") 
     user_input = messages[-1]["content"] if messages else ""
 
     # Limit message size

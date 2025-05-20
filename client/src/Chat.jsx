@@ -1,8 +1,25 @@
 import React, { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
+import { supabase } from './supabaseClient';
+
+const saveChat = async (chatTitle, messagesArray) => {
+  const {
+    data: { user }
+  } = await supabase.auth.getUser();
+
+  if (!user) return alert('Not logged in');
+
+  const { error } = await supabase.from('chats').insert({
+    user_id: user.id,
+    title: chatTitle,
+    messages: messagesArray,
+  });
+
+  if (error) console.error('Error saving chat:', error.message);
+};
 
 const formatAiMessage = (text) => {
-  const lines = text.split(/(\d+\.\s+)/).filter(Boolean); // matches "1. ", "2. ", etc.
+  const lines = text.split(/(\d+\.\s+)/).filter(Boolean);
   if (lines.length < 3) return text;
 
   const formatted = [];
@@ -24,18 +41,33 @@ function Chat({ chat, updateChat }) {
     const newMessages = [...chat.messages, { role: "user", content: input }];
     updateChat(chat.id, newMessages);
     setIsTyping(true);
+    setInput('');
 
     try {
-      const res = await axios.post('https://mental-health-ai-wivn.onrender.com/chat', {messages: newMessages});
+      const {
+        data: { user }
+      } = await supabase.auth.getUser();
+      if (!user) return alert('Not logged in');
+
+      const res = await axios.post('https://mental-health-ai-wivn.onrender.com/chat', {
+        messages: newMessages,
+        user_id: user.id
+      });
 
       const reply = res.data.response;
-      updateChat(chat.id, [...newMessages, { role: "assistant", content: reply }]);
+      const updatedMessages = [...newMessages, { role: "assistant", content: reply }];
+      updateChat(chat.id, updatedMessages);
+
+      // Save to Supabase
+      await saveChat(chat.title, updatedMessages);
     } catch (error) {
-      updateChat(chat.id, [...newMessages, { role: "assistant", content: "Sorry, something went wrong." }]);
+      updateChat(chat.id, [...newMessages, {
+        role: "assistant",
+        content: "Sorry, something went wrong."
+      }]);
     }
 
     setIsTyping(false);
-    setInput('');
   };
 
   useEffect(() => {
@@ -43,11 +75,11 @@ function Chat({ chat, updateChat }) {
   }, [chat.messages, isTyping]);
 
   return (
-      <div
-        className="chat-container-fade"
-        style={{ flex: 1, height: '100vh', display: 'flex', flexDirection: 'column' }}
-      >
-      {/* Sticky Title */}
+    <div
+      className="chat-container-fade"
+      style={{ flex: 1, height: '100vh', display: 'flex', flexDirection: 'column' }}
+    >
+      {/* Title */}
       <div style={{
         position: 'sticky',
         top: 0,
@@ -68,7 +100,7 @@ function Chat({ chat, updateChat }) {
         </h1>
       </div>
 
-      {/* Scrollable Chat */}
+      {/* Chat messages */}
       <div style={{ flex: 1, overflowY: 'auto', padding: '1rem 2rem', marginBottom: '1rem' }}>
         {chat.messages.map((msg, i) => (
           <div key={i} style={{ width: '100%' }}>
@@ -99,7 +131,7 @@ function Chat({ chat, updateChat }) {
           </div>
         ))}
 
-        {/* Typing animation */}
+        {/* Typing indicator */}
         {isTyping && (
           <div style={{
             marginTop: '1.25rem',
@@ -123,7 +155,7 @@ function Chat({ chat, updateChat }) {
         <div ref={chatEndRef} />
       </div>
 
-      {/* Input Section */}
+      {/* Input box */}
       <div style={{ padding: '1rem 2rem', borderTop: '1px solid #333', display: 'flex', gap: '10px' }}>
         <textarea
           rows={2}

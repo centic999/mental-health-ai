@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import Sidebar from './Sidebar';
 import Chat from './Chat';
+import { supabase } from './supabaseClient';
+
 
 function App() {
   const [chats, setChats] = useState([]);
@@ -31,6 +33,24 @@ function App() {
     );
   };
 
+  useEffect(() => {
+    const loadChats = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+  
+      const { data, error } = await supabase
+        .from('chats')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+  
+      if (error) console.error(error);
+      else setChats(data); // your state setter
+    };
+  
+    loadChats();
+  }, []);
+  
   const selectChat = (id) => setActiveChatId(id);
 
   const updateChat = (id, messages) => {
@@ -48,6 +68,24 @@ function App() {
       )
     );
   };
+
+  useEffect(() => {
+  const loadChats = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const { data, error } = await supabase
+      .from('chats')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false });
+
+    if (error) console.error(error);
+    else setChats(data); // your state setter
+  };
+
+  loadChats();
+}, []);
 
   const activeChat = chats.find((c) => c.id === activeChatId);
 
