@@ -1,28 +1,41 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Sidebar from './Sidebar';
 import Chat from './Chat';
 import { supabase } from './supabaseClient';
-import Auth from './Auth'; // <-- already created
-
-useEffect(() => {
-  const checkUser = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) setShowLogin(true);
-  };
-  checkUser();
-}, []);
-const [showLogin, setShowLogin] = useState(false);
-
-
-
+import Auth from './Auth';
 
 function App() {
   const [chats, setChats] = useState([]);
   const [activeChatId, setActiveChatId] = useState(null);
   const [consentGiven, setConsentGiven] = useState(false);
-  if (showLogin && !consentGiven) {
-    return <Auth />;
-  }
+  const [showLogin, setShowLogin] = useState(false);
+
+  useEffect(() => {
+    const checkUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) setShowLogin(true);
+    };
+    checkUser();
+  }, []);
+
+  useEffect(() => {
+    const loadChats = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from('chats')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (error) console.error(error);
+      else setChats(data);
+    };
+
+    loadChats();
+  }, []);
+
   const createNewChat = () => {
     const id = Date.now().toString();
     const newChat = {
@@ -46,6 +59,7 @@ function App() {
       )
     );
   };
+
   const selectChat = (id) => setActiveChatId(id);
 
   const updateChat = (id, messages) => {
@@ -64,25 +78,11 @@ function App() {
     );
   };
 
-  useEffect(() => {
-  const loadChats = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
-
-    const { data, error } = await supabase
-      .from('chats')
-      .select('*')
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false });
-
-    if (error) console.error(error);
-    else setChats(data); // your state setter
-  };
-
-  loadChats();
-}, []);
-
   const activeChat = chats.find((c) => c.id === activeChatId);
+
+  if (showLogin && !consentGiven) {
+    return <Auth />;
+  }
 
   if (!consentGiven) {
     return (
@@ -109,19 +109,12 @@ function App() {
           width: '400px',
           animation: 'fadeSlideUp 0.8s ease-out'
         }}>
-          <h1 style={{
-            fontSize: '1.8rem',
-            color: '#72ffaf',
-            marginBottom: '1rem'
-          }}>
+          <h1 style={{ fontSize: '1.8rem', color: '#72ffaf', marginBottom: '1rem' }}>
             Welcome to HelpLineAI
           </h1>
-          <p style={{
-            fontSize: '1rem',
-            color: '#f0f0f0',
-            marginBottom: '1.5rem'
-          }}>
-            This is a mental health support assistant. It does not replace professional help. All conversations are private and anonymous. By clicking "Agree", you understand and accept this.
+          <p style={{ fontSize: '1rem', color: '#f0f0f0', marginBottom: '1.5rem' }}>
+            This is a mental health support assistant. It does not replace professional help.
+            All conversations are private and anonymous. By clicking "Agree", you understand and accept this.
           </p>
           <button
             onClick={() => setConsentGiven(true)}
@@ -139,25 +132,19 @@ function App() {
             Agree and Continue
           </button>
         </div>
-  
+
         <style>
           {`
             @keyframes fadeSlideUp {
-              from {
-                opacity: 0;
-                transform: translateY(30px);
-              }
-              to {
-                opacity: 1;
-                transform: translateY(0);
-              }
+              from { opacity: 0; transform: translateY(30px); }
+              to { opacity: 1; transform: translateY(0); }
             }
           `}
         </style>
       </div>
     );
   }
-  
+
   return (
     <div style={{ display: 'flex', height: '100vh', width: '100vw', overflow: 'hidden' }}>
       <div style={{ width: '250px', background: '#111' }}>
