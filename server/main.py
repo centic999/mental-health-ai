@@ -3,6 +3,12 @@ from fastapi.middleware.cors import CORSMiddleware
 import requests
 import json
 from datetime import datetime
+import os
+
+os.makedirs("logs", exist_ok=True)
+
+OPENROUTER_KEY = os.getenv("OPENROUTER_API_KEY")
+
 
 # === LOGGING ===
 def log_decision(user_input, model_used, system_prompt, ai_response):
@@ -105,7 +111,7 @@ async def fallback_openrouter(messages, user_input):
         response = requests.post(
             "https://openrouter.ai/api/v1/chat/completions",
             headers={
-                "Authorization": f"Bearer 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",
+                "Authorization": f"Bearer {OPENROUTER_KEY}",
                 "Content-Type": "application/json",
                 "HTTP-Referer": "https://yourwebsite.com",
                 "X-Title": "MentalHealthHelper"
@@ -117,19 +123,14 @@ async def fallback_openrouter(messages, user_input):
             }
         )
         result = response.json()
-        print("OpenRouter raw result:", result)
-
-        if "error" in result:
-            raise Exception(f"OpenRouter API error: {result['error']}")
-
-        if "choices" in result and "message" in result["choices"][0]:
+        if "choices" in result:
             fallback_response = result["choices"][0]["message"]["content"]
             log_decision(user_input, "openrouter/mistral-7b", "fallback model", fallback_response)
             return {"response": fallback_response}
         else:
             raise Exception("Invalid fallback response format")
-
     except Exception as e:
         print("OpenRouter failed:", e)
         return {"response": "Sorry, something went wrong while generating a response."}
+
 
