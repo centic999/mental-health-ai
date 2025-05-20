@@ -12,9 +12,7 @@ useEffect(() => {
   checkUser();
 }, []);
 const [showLogin, setShowLogin] = useState(false);
-if (showLogin && !consentGiven) {
-  return <Auth />;
-}
+
 
 
 
@@ -22,7 +20,9 @@ function App() {
   const [chats, setChats] = useState([]);
   const [activeChatId, setActiveChatId] = useState(null);
   const [consentGiven, setConsentGiven] = useState(false);
-
+  if (showLogin && !consentGiven) {
+    return <Auth />;
+  }
   const createNewChat = () => {
     const id = Date.now().toString();
     const newChat = {
