@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
 import { supabase } from './supabaseClient';
 
+
 const saveChat = async (chatTitle, messagesArray) => {
   const {
     data: { user }
