@@ -105,7 +105,7 @@ async def fallback_openrouter(messages, user_input):
         response = requests.post(
             "https://openrouter.ai/api/v1/chat/completions",
             headers={
-                "Authorization": f"Bearer YOUR_OPENROUTER_API_KEY",
+                "Authorization": f"Bearer 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",
                 "Content-Type": "application/json",
                 "HTTP-Referer": "https://yourwebsite.com",
                 "X-Title": "MentalHealthHelper"
