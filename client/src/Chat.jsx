@@ -10,11 +10,12 @@ const saveChat = async (chatTitle, messagesArray) => {
 
   if (!user) return alert('Not logged in');
 
-  const { error } = await supabase.from('chats').insert({
+  const { error } = await supabase.from('chats').upsert({
+    id: chatId, 
     user_id: user.id,
     title: chatTitle,
     messages: messagesArray,
-  });
+  });  
 
   if (error) console.error('Error saving chat:', error.message);
 };

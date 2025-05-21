@@ -1,12 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../supabaseClient';
 
 function ProfileMenu() {
   const [user, setUser] = useState(null);
-  const [authMode, setAuthMode] = useState(null); // "login" | "signup" | null
+  const [authMode, setAuthMode] = useState(null); // "login" | "signup"
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [feedback, setFeedback] = useState('');
+  const [showDropdown, setShowDropdown] = useState(false);
+  const modalRef = useRef(null);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -15,6 +17,15 @@ function ProfileMenu() {
     };
     fetchUser();
   }, []);
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (authMode && e.key === 'Escape') closeModal();
+      if (authMode && e.key === 'Enter') handleAuthSubmit();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [authMode, email, password]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -27,14 +38,19 @@ function ProfileMenu() {
 
     if (authMode === 'signup') {
       const { error } = await supabase.auth.signUp({ email, password });
-      if (error) return setFeedback(error.message);
+      if (error) {
+        if (error.message.includes("already registered")) {
+          return setFeedback("⚠️ An account already exists with that email.");
+        }
+        return setFeedback(error.message);
+      }
       setFeedback('✅ Check your email to confirm sign up.');
     }
 
     if (authMode === 'login') {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) return setFeedback(error.message);
-      window.location.reload(); // pulls session and refreshes UI
+      window.location.reload();
     }
   };
 
@@ -45,24 +61,55 @@ function ProfileMenu() {
     setFeedback('');
   };
 
+  const getAvatarUrl = () => {
+    if (user?.user_metadata?.avatar_url) return user.user_metadata.avatar_url;
+    const initial = user?.email?.[0]?.toUpperCase() || 'U';
+    return `https://ui-avatars.com/api/?name=${initial}`;
+  };
+
   return (
     <div style={{ position: 'absolute', top: 20, right: 20, zIndex: 9999 }}>
       {user ? (
         <>
-          <button
-            onClick={handleLogout}
+          <img
+            src={getAvatarUrl()}
+            onClick={() => setShowDropdown(!showDropdown)}
+            alt="avatar"
             style={{
-              background: 'none',
-              border: '1px solid #72ffaf',
-              color: '#72ffaf',
-              padding: '0.5rem 1rem',
-              borderRadius: '8px',
-              fontWeight: 'bold',
-              cursor: 'pointer'
+              width: 36,
+              height: 36,
+              borderRadius: '50%',
+              cursor: 'pointer',
+              border: '2px solid white',
             }}
-          >
-            Log Out ({user.email})
-          </button>
+          />
+          {showDropdown && (
+            <div style={{
+              marginTop: 8,
+              background: '#222',
+              padding: '12px',
+              borderRadius: '8px',
+              color: '#fff',
+              minWidth: '180px',
+              position: 'absolute',
+              right: 0,
+              top: 45,
+              boxShadow: '0 0 10px rgba(0,0,0,0.5)',
+              zIndex: 9999
+            }}>
+              <div style={{ fontSize: '0.9rem', marginBottom: '10px' }}>{user.email}</div>
+              <div
+                onClick={handleLogout}
+                style={{
+                  cursor: 'pointer',
+                  color: '#ff4d4d',
+                  fontWeight: 'bold'
+                }}
+              >
+                Log Out
+              </div>
+            </div>
+          )}
         </>
       ) : (
         <div style={{ display: 'flex', gap: '10px' }}>
@@ -98,22 +145,29 @@ function ProfileMenu() {
       )}
 
       {authMode && (
-        <div style={{
-          position: 'fixed', top: 0, left: 0,
-          width: '100vw', height: '100vh',
-          background: 'rgba(0,0,0,0.6)',
-          display: 'flex', justifyContent: 'center', alignItems: 'center',
-          zIndex: 10000
-        }}>
-          <div style={{
-            background: '#1e1e1e',
-            padding: '2rem',
-            borderRadius: '12px',
-            boxShadow: '0 0 20px rgba(114, 255, 175, 0.3)',
-            width: '90%',
-            maxWidth: '400px',
-            animation: 'fadeSlideUp 0.4s ease-out'
-          }}>
+        <div
+          onClick={closeModal}
+          style={{
+            position: 'fixed', top: 0, left: 0,
+            width: '100vw', height: '100vh',
+            background: 'rgba(0,0,0,0.6)',
+            display: 'flex', justifyContent: 'center', alignItems: 'center',
+            zIndex: 10000
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            ref={modalRef}
+            style={{
+              background: '#1e1e1e',
+              padding: '2rem',
+              borderRadius: '12px',
+              boxShadow: '0 0 20px rgba(114, 255, 175, 0.3)',
+              width: '90%',
+              maxWidth: '400px',
+              animation: 'fadeSlideUp 0.4s ease-out'
+            }}
+          >
             <h2 style={{ color: '#72ffaf', textAlign: 'center', marginBottom: '1rem' }}>
               {authMode === 'signup' ? 'Sign Up' : 'Log In'}
             </h2>
