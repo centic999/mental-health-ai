@@ -3,6 +3,7 @@ import Sidebar from './Sidebar';
 import Chat from './Chat';
 import { supabase } from './supabaseClient';
 import ProfileMenu from './components/ProfileMenu'; 
+import { v4 as uuidv4 } from 'uuid';
 
 function App() {
   const [chats, setChats] = useState([]);
@@ -52,11 +53,11 @@ function App() {
   }, []);
 
   const createNewChat = async () => {
-    const id = Date.now().toString();
+    const id = uuidv4(); // ✅ this is a valid UUID
     const newChat = {
       id,
       title: "New Chat",
-      messages: []  // must include this
+      messages: []
     };
   
     setChats((prev) => [newChat, ...prev]);
@@ -65,16 +66,20 @@ function App() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
   
-    // force write to Supabase with empty messages array
     const { error } = await supabase.from('chats').upsert({
-      id: newChat.id,
+      id: id,
       user_id: user.id,
       title: newChat.title,
-      messages: [],  // required!
+      messages: []
     });
   
-    if (error) console.error("Error saving new chat:", error.message);
+    if (error) {
+      console.error("❌ Failed to save new chat:", error.message);
+    } else {
+      console.log("✅ Chat saved to Supabase");
+    }
   };
+  
   
   
 
