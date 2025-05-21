@@ -5,22 +5,29 @@ import { supabase } from './supabaseClient';
 
 const saveChat = async (chatId, chatTitle, messagesArray) => {
   const {
-    data: { user }
+    data: { user },
+    error
   } = await supabase.auth.getUser();
-  
-  if (!user) {
-    alert("You're not logged in. These chats won't be saved.");
+
+  if (error || !user) {
+    console.warn("Not logged in, skipping save.");
     return;
-  }  
-  const { error } = await supabase.from('chats').upsert({
+  }
+
+  const { error: insertError } = await supabase.from('chats').upsert({
     id: chatId,
     user_id: user.id,
     title: chatTitle,
-    messages: messagesArray,
+    messages: messagesArray
   });
 
-  if (error) console.error('Error saving chat:', error.message);
+  if (insertError) {
+    console.error("❌ Failed to save chat to Supabase:", insertError.message);
+  } else {
+    console.log("✅ Chat saved to Supabase:", chatTitle);
+  }
 };
+
 
 
 const formatAiMessage = (text) => {
