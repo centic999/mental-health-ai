@@ -2,20 +2,20 @@ import React, { useState, useEffect } from 'react';
 import Sidebar from './Sidebar';
 import Chat from './Chat';
 import { supabase } from './supabaseClient';
-import Auth from './Auth';
+import ProfileMenu from './components/ProfileMenu'; 
 
 function App() {
   const [chats, setChats] = useState([]);
   const [activeChatId, setActiveChatId] = useState(null);
   const [consentGiven, setConsentGiven] = useState(false);
-  const [showLogin, setShowLogin] = useState(false);
+  const [user, setUser] = useState(null);
 
   useEffect(() => {
-    const checkUser = async () => {
+    const fetchUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) setShowLogin(true);
+      setUser(user);
     };
-    checkUser();
+    fetchUser();
   }, []);
 
   useEffect(() => {
@@ -80,10 +80,6 @@ function App() {
 
   const activeChat = chats.find((c) => c.id === activeChatId);
 
-  if (showLogin && !consentGiven) {
-    return <Auth />;
-  }
-
   if (!consentGiven) {
     return (
       <div style={{
@@ -147,6 +143,7 @@ function App() {
 
   return (
     <div style={{ display: 'flex', height: '100vh', width: '100vw', overflow: 'hidden' }}>
+      <ProfileMenu /> {/* NEW Profile Button */}
       <div style={{ width: '250px', background: '#111' }}>
         <Sidebar
           chats={chats}
