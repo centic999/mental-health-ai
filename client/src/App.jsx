@@ -36,7 +36,7 @@ function App() {
     loadChats();
   }, []);
 
-  const createNewChat = () => {
+  const createNewChat = async () => {
     const id = Date.now().toString();
     const newChat = {
       id,
@@ -45,7 +45,26 @@ function App() {
     };
     setChats((prev) => [newChat, ...prev]);
     setActiveChatId(id);
+  
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) saveChat(newChat); // save right after creating
   };
+  
+
+  const saveChat = async (chat) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+  
+    const { error } = await supabase.from('chats').upsert({
+      id: chat.id,
+      user_id: user.id,
+      title: chat.title,
+      messages: chat.messages || [],
+    });
+  
+    if (error) console.error("Error saving chat:", error.message);
+  };
+  
 
   const deleteChat = (id) => {
     setChats((prev) => prev.filter((chat) => chat.id !== id));
@@ -54,11 +73,17 @@ function App() {
 
   const renameChat = (id, newTitle) => {
     setChats((prev) =>
-      prev.map((chat) =>
-        chat.id === id ? { ...chat, title: newTitle } : chat
-      )
+      prev.map((chat) => {
+        if (chat.id === id) {
+          const updated = { ...chat, title: newTitle };
+          saveChat(updated);
+          return updated;
+        }
+        return chat;
+      })
     );
   };
+  
 
   const selectChat = (id) => setActiveChatId(id);
 
