@@ -41,14 +41,26 @@ function App() {
     const newChat = {
       id,
       title: "New Chat",
-      messages: []
+      messages: []  // must include this
     };
+  
     setChats((prev) => [newChat, ...prev]);
     setActiveChatId(id);
   
     const { data: { user } } = await supabase.auth.getUser();
-    if (user) saveChat(newChat); // save right after creating
+    if (!user) return;
+  
+    // force write to Supabase with empty messages array
+    const { error } = await supabase.from('chats').upsert({
+      id: newChat.id,
+      user_id: user.id,
+      title: newChat.title,
+      messages: [],  // required!
+    });
+  
+    if (error) console.error("Error saving new chat:", error.message);
   };
+  
   
 
   const saveChat = async (chat) => {
