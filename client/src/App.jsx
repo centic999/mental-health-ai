@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Sidebar from './Sidebar';
 import Chat from './Chat';
 import { supabase } from './supabaseClient';
-import ProfileMenu from './components/ProfileMenu'; 
+import ProfileMenu from './components/ProfileMenu';
 
 function App() {
   const [chats, setChats] = useState([]);
@@ -143,7 +143,6 @@ function App() {
 
   return (
     <div style={{ display: 'flex', height: '100vh', width: '100vw', overflow: 'hidden' }}>
-      <ProfileMenu /> {/* NEW Profile Button */}
       <div style={{ width: '250px', background: '#111' }}>
         <Sidebar
           chats={chats}
@@ -157,7 +156,30 @@ function App() {
 
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
         {activeChat ? (
-          <Chat chat={activeChat} updateChat={updateChat} />
+          <>
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              background: '#1e1e1e',
+              padding: '1rem 2rem',
+              borderBottom: '1px solid #333',
+              zIndex: 10
+            }}>
+              <h1 style={{
+                fontSize: '1.5rem',
+                margin: 0,
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+                color: '#fff'
+              }}>
+                {activeChat.title}
+              </h1>
+              <ProfileMenu />
+            </div>
+            <Chat chat={activeChat} updateChat={updateChat} />
+          </>
         ) : (
           <div className="landing-fade" style={{
             flex: 1,

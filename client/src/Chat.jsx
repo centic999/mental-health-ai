@@ -3,22 +3,25 @@ import axios from 'axios';
 import { supabase } from './supabaseClient';
 
 
-const saveChat = async (chatTitle, messagesArray) => {
+const saveChat = async (chatId, chatTitle, messagesArray) => {
   const {
     data: { user }
   } = await supabase.auth.getUser();
-
-  if (!user) return alert('Not logged in');
-
+  
+  if (!user) {
+    alert("You're not logged in. These chats won't be saved.");
+    return;
+  }  
   const { error } = await supabase.from('chats').upsert({
-    id: chatId, 
+    id: chatId,
     user_id: user.id,
     title: chatTitle,
     messages: messagesArray,
-  });  
+  });
 
   if (error) console.error('Error saving chat:', error.message);
 };
+
 
 const formatAiMessage = (text) => {
   const lines = text.split(/(\d+\.\s+)/).filter(Boolean);
@@ -67,7 +70,7 @@ function Chat({ chat, updateChat }) {
       const updatedMessages = [...newMessages, { role: "assistant", content: reply }];
       updateChat(chat.id, updatedMessages);
   
-      await saveChat(chat.title, updatedMessages);
+      await saveChat(chat.id, chat.title, updatedMessages);
     } catch (error) {
       console.error("Error during AI chat:", error);
       updateChat(chat.id, [...newMessages, {
