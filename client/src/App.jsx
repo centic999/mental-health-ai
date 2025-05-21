@@ -21,17 +21,32 @@ function App() {
   useEffect(() => {
     const loadChats = async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
+      if (!user) {
+        console.warn("Not logged in. Skipping chat load.");
+        return;
+      }
+    
       const { data, error } = await supabase
         .from('chats')
         .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
-
-      if (error) console.error(error);
-      else setChats(data);
-    };
+    
+      if (error) {
+        console.error("Error loading chats:", error.message);
+        return;
+      }
+    
+      // Normalize chats
+      const normalizedChats = data.map((chat) => ({
+        id: chat.id,
+        title: chat.title || "New Chat",
+        messages: Array.isArray(chat.messages) ? chat.messages : [],
+      }));
+    
+      console.log("✅ Loaded and normalized chats:", normalizedChats);
+      setChats(normalizedChats);
+    };    
 
     loadChats();
   }, []);
