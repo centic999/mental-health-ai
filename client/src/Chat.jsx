@@ -38,38 +38,46 @@ function Chat({ chat, updateChat }) {
 
   const handleSend = async () => {
     if (!input.trim()) return;
-
+  
     const newMessages = [...chat.messages, { role: "user", content: input }];
     updateChat(chat.id, newMessages);
     setIsTyping(true);
     setInput('');
-
+  
     try {
       const {
         data: { user }
       } = await supabase.auth.getUser();
-      if (!user) return alert('Not logged in');
-
+  
+      if (!user) {
+        alert('Not logged in');
+        setIsTyping(false);
+        return;
+      }
+  
       const res = await axios.post('https://mental-health-ai-wivn.onrender.com/chat', {
         messages: newMessages,
         user_id: user.id
       });
-
-      const reply = res.data.response;
+  
+      console.log("Full AI API response:", res.data);
+  
+      const reply = res.data?.response || "Sorry, I didn’t get that. Try again.";
       const updatedMessages = [...newMessages, { role: "assistant", content: reply }];
       updateChat(chat.id, updatedMessages);
-
-      // Save to Supabase
+  
       await saveChat(chat.title, updatedMessages);
     } catch (error) {
+      console.error("Error during AI chat:", error);
       updateChat(chat.id, [...newMessages, {
         role: "assistant",
         content: "Sorry, something went wrong."
       }]);
     }
-
+  
     setIsTyping(false);
   };
+  
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
