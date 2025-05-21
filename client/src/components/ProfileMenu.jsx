@@ -3,7 +3,10 @@ import { supabase } from '../supabaseClient';
 
 function ProfileMenu() {
   const [user, setUser] = useState(null);
-  const [menuOpen, setMenuOpen] = useState(false);
+  const [authMode, setAuthMode] = useState(null); // "login" | "signup" | null
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [feedback, setFeedback] = useState('');
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -18,51 +21,176 @@ function ProfileMenu() {
     window.location.reload();
   };
 
-  const handleLogin = () => window.location.href = "/auth?mode=login";
-  const handleSignup = () => window.location.href = "/auth?mode=signup";
+  const handleAuthSubmit = async () => {
+    setFeedback('');
+    if (!email || !password) return setFeedback('Email and password required');
+
+    if (authMode === 'signup') {
+      const { error } = await supabase.auth.signUp({ email, password });
+      if (error) return setFeedback(error.message);
+      setFeedback('✅ Check your email to confirm sign up.');
+    }
+
+    if (authMode === 'login') {
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) return setFeedback(error.message);
+      window.location.reload(); // pulls session and refreshes UI
+    }
+  };
+
+  const closeModal = () => {
+    setAuthMode(null);
+    setEmail('');
+    setPassword('');
+    setFeedback('');
+  };
 
   return (
-    <div style={{ position: 'absolute', top: 20, right: 20 }}>
-      <button
-        onClick={() => setMenuOpen(!menuOpen)}
-        style={{
-          background: 'none',
-          border: 'none',
-          cursor: 'pointer',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '0.5rem'
-        }}
-      >
-        <img
-          src={user?.user_metadata?.avatar_url || 'https://ui-avatars.com/api/?name=U'}
-          alt="profile"
-          style={{
-            width: 36,
-            height: 36,
-            borderRadius: '50%',
-            border: '2px solid white'
-          }}
-        />
-      </button>
+    <div style={{ position: 'absolute', top: 20, right: 20, zIndex: 9999 }}>
+      {user ? (
+        <>
+          <button
+            onClick={handleLogout}
+            style={{
+              background: 'none',
+              border: '1px solid #72ffaf',
+              color: '#72ffaf',
+              padding: '0.5rem 1rem',
+              borderRadius: '8px',
+              fontWeight: 'bold',
+              cursor: 'pointer'
+            }}
+          >
+            Log Out ({user.email})
+          </button>
+        </>
+      ) : (
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <button
+            onClick={() => setAuthMode('signup')}
+            style={{
+              padding: '0.5rem 1rem',
+              background: '#72ffaf',
+              color: 'black',
+              border: 'none',
+              borderRadius: '8px',
+              fontWeight: 'bold',
+              cursor: 'pointer'
+            }}
+          >
+            Sign Up
+          </button>
+          <button
+            onClick={() => setAuthMode('login')}
+            style={{
+              padding: '0.5rem 1rem',
+              background: '#2c2c2c',
+              color: 'white',
+              border: '1px solid #72ffaf',
+              borderRadius: '8px',
+              fontWeight: 'bold',
+              cursor: 'pointer'
+            }}
+          >
+            Log In
+          </button>
+        </div>
+      )}
 
-      {menuOpen && (
+      {authMode && (
         <div style={{
-          marginTop: 10, background: '#222', color: '#fff',
-          borderRadius: 8, padding: 10, minWidth: 180, position: 'absolute', right: 0,
-          boxShadow: '0 0 10px rgba(0,0,0,0.5)'
+          position: 'fixed', top: 0, left: 0,
+          width: '100vw', height: '100vh',
+          background: 'rgba(0,0,0,0.6)',
+          display: 'flex', justifyContent: 'center', alignItems: 'center',
+          zIndex: 10000
         }}>
-          {user ? (
-            <>
-              <div style={{ fontSize: '0.9rem', marginBottom: 8 }}>{user.email}</div>
-              <div onClick={handleLogout} style={{ cursor: 'pointer', color: '#ff4d4d' }}>Log Out</div>
-            </>
-          ) : (
-            <>
-              <div onClick={handleLogin} style={{ cursor: 'pointer', marginBottom: 6 }}>Log In</div>
-              <div onClick={handleSignup} style={{ cursor: 'pointer' }}>Sign Up</div>
-            </>
-          )}
+          <div style={{
+            background: '#1e1e1e',
+            padding: '2rem',
+            borderRadius: '12px',
+            boxShadow: '0 0 20px rgba(114, 255, 175, 0.3)',
+            width: '90%',
+            maxWidth: '400px',
+            animation: 'fadeSlideUp 0.4s ease-out'
+          }}>
+            <h2 style={{ color: '#72ffaf', textAlign: 'center', marginBottom: '1rem' }}>
+              {authMode === 'signup' ? 'Sign Up' : 'Log In'}
+            </h2>
+
+            <input
+              type="email"
+              value={email}
+              placeholder="Email"
+              onChange={e => setEmail(e.target.value)}
+              style={{
+                width: '100%', padding: '0.6rem',
+                marginBottom: '0.8rem', borderRadius: '8px',
+                border: '1px solid #444', background: '#2c2c2c', color: '#fff'
+              }}
+            />
+            <input
+              type="password"
+              value={password}
+              placeholder="Password"
+              onChange={e => setPassword(e.target.value)}
+              style={{
+                width: '100%', padding: '0.6rem',
+                marginBottom: '1rem', borderRadius: '8px',
+                border: '1px solid #444', background: '#2c2c2c', color: '#fff'
+              }}
+            />
+
+            {feedback && (
+              <div style={{ color: '#72ffaf', marginBottom: '0.8rem', fontSize: '0.95rem', textAlign: 'center' }}>
+                {feedback}
+              </div>
+            )}
+
+            <button
+              onClick={handleAuthSubmit}
+              style={{
+                width: '100%', padding: '0.7rem',
+                background: '#4caf50', color: 'white',
+                border: 'none', borderRadius: '8px',
+                fontWeight: 'bold', fontSize: '1rem'
+              }}
+            >
+              {authMode === 'signup' ? 'Sign Up' : 'Log In'}
+            </button>
+
+            <div style={{
+              marginTop: '1rem', textAlign: 'center'
+            }}>
+              <button
+                onClick={closeModal}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: '#ccc',
+                  textDecoration: 'underline',
+                  cursor: 'pointer'
+                }}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+
+          <style>
+            {`
+              @keyframes fadeSlideUp {
+                0% {
+                  opacity: 0;
+                  transform: translateY(40px);
+                }
+                100% {
+                  opacity: 1;
+                  transform: translateY(0);
+                }
+              }
+            `}
+          </style>
         </div>
       )}
     </div>
