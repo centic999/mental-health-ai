@@ -3,7 +3,7 @@ import { supabase } from '../supabaseClient';
 
 function ProfileMenu() {
   const [user, setUser] = useState(null);
-  const [authMode, setAuthMode] = useState(null); // "login" | "signup"
+  const [authMode, setAuthMode] = useState(null); // 'login' | 'signup'
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [feedback, setFeedback] = useState('');
@@ -52,6 +52,14 @@ function ProfileMenu() {
       if (error) return setFeedback(error.message);
       window.location.reload();
     }
+  };
+
+  const signInWithGoogle = async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: window.location.href }
+    });
+    if (error) console.error('Google Sign-in error:', error.message);
   };
 
   const closeModal = () => {
@@ -213,9 +221,7 @@ function ProfileMenu() {
               {authMode === 'signup' ? 'Sign Up' : 'Log In'}
             </button>
 
-            <div style={{
-              marginTop: '1rem', textAlign: 'center'
-            }}>
+            <div style={{ marginTop: '1rem', textAlign: 'center' }}>
               <button
                 onClick={closeModal}
                 style={{
@@ -229,19 +235,36 @@ function ProfileMenu() {
                 Cancel
               </button>
             </div>
+
+            <hr style={{ margin: '1.5rem 0', borderColor: '#444' }} />
+
+            <button
+              onClick={signInWithGoogle}
+              style={{
+                width: '100%',
+                padding: '0.7rem',
+                background: '#000',
+                color: '#fff',
+                border: '1px solid #888',
+                borderRadius: '8px',
+                fontWeight: 'bold',
+                fontSize: '1rem',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '10px'
+              }}
+            >
+              <img src="/google-icon.svg" alt="Google" style={{ width: '20px', height: '20px' }} />
+              Sign in with Google
+            </button>
           </div>
 
           <style>
             {`
               @keyframes fadeSlideUp {
-                0% {
-                  opacity: 0;
-                  transform: translateY(40px);
-                }
-                100% {
-                  opacity: 1;
-                  transform: translateY(0);
-                }
+                0% { opacity: 0; transform: translateY(40px); }
+                100% { opacity: 1; transform: translateY(0); }
               }
             `}
           </style>
