@@ -18,9 +18,8 @@ function Chat({ chat, updateChat }) {
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [showGuestWarning, setShowGuestWarning] = useState(false);
-  const [suppressWarning, setSuppressWarning] = useState(
-    sessionStorage.getItem('suppressGuestWarning') === 'true'
-  );  
+  const [fadeOut, setFadeOut] = useState(false);
+  const [suppressWarning, setSuppressWarning] = useState(false);
   const chatEndRef = useRef(null);
 
   const saveChat = async (chatId, chatTitle, messagesArray) => {
@@ -49,6 +48,7 @@ function Chat({ chat, updateChat }) {
   };
 
   const handleSend = async () => {
+    if (isTyping) return;
     if (!input.trim()) return;
 
     const newMessages = [...chat.messages, { role: 'user', content: input }];
@@ -63,7 +63,13 @@ function Chat({ chat, updateChat }) {
 
       if (!user && !suppressWarning) {
         setShowGuestWarning(true);
-        setTimeout(() => setShowGuestWarning(false), 5000);
+        setTimeout(() => {
+          setFadeOut(true);
+          setTimeout(() => {
+            setShowGuestWarning(false);
+            setFadeOut(false);
+          }, 400);
+        }, 4600); // Total visible: 5s
       }
 
       const res = await axios.post('https://mental-health-ai-wivn.onrender.com/chat', {
@@ -111,9 +117,8 @@ function Chat({ chat, updateChat }) {
           fontWeight: 'bold',
           boxShadow: '0 4px 12px rgba(0,0,0,0.25)',
           zIndex: 9999,
-          maxWidth: '90%',
           textAlign: 'center',
-          animation: 'fadeSlideIn 0.4s ease-out'
+          animation: fadeOut ? 'fadeOut 0.4s ease-in' : 'fadeSlideIn 0.4s ease-out'
         }}>
           ⚠️ You are not logged in. Your chats won’t be saved.<br />
           <label style={{ marginTop: '0.5rem', display: 'block', fontWeight: 'normal' }}>
@@ -121,8 +126,7 @@ function Chat({ chat, updateChat }) {
               type="checkbox"
               onChange={(e) => {
                 setSuppressWarning(e.target.checked);
-                sessionStorage.setItem('suppressGuestWarning', e.target.checked);
-              }}              
+              }}
             /> Don’t show this again
           </label>
         </div>
@@ -133,6 +137,10 @@ function Chat({ chat, updateChat }) {
           @keyframes fadeSlideIn {
             from { opacity: 0; transform: translateY(-20px); }
             to { opacity: 1; transform: translateY(0); }
+          }
+          @keyframes fadeOut {
+            from { opacity: 1; transform: translateY(0); }
+            to { opacity: 0; transform: translateY(-20px); }
           }
         `}
       </style>
@@ -223,9 +231,11 @@ function Chat({ chat, updateChat }) {
           onKeyDown={(e) => {
             if (e.key === 'Enter' && !e.shiftKey) {
               e.preventDefault();
-              handleSend();
+              if (!isTyping) {
+                handleSend();
+              }
             }
-          }}
+          }}                
           style={{
             flex: 1,
             fontSize: '1rem',
