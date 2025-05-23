@@ -252,11 +252,12 @@ function ProfileMenu() {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                gap: '10px'
+                gap: '10px',
+                marginTop: '0.5rem'
               }}
             >
               <img src="/google-icon.svg" alt="Google" style={{ width: '20px', height: '20px' }} />
-              Sign in with Google
+              {authMode === 'signup' ? 'Sign up with Google' : 'Sign in with Google'}
             </button>
           </div>
 
