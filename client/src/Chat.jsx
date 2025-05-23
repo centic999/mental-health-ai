@@ -18,6 +18,9 @@ function Chat({ chat, updateChat }) {
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [showGuestWarning, setShowGuestWarning] = useState(false);
+  const [suppressWarning, setSuppressWarning] = useState(
+    localStorage.getItem('suppressGuestWarning') === 'true'
+  );
   const chatEndRef = useRef(null);
 
   const saveChat = async (chatId, chatTitle, messagesArray) => {
@@ -58,23 +61,23 @@ function Chat({ chat, updateChat }) {
         data: { user }
       } = await supabase.auth.getUser();
 
-      if (!user) {
+      if (!user && !suppressWarning) {
         setShowGuestWarning(true);
         setTimeout(() => setShowGuestWarning(false), 5000);
-        setIsTyping(false);
-        return;
       }
 
       const res = await axios.post('https://mental-health-ai-wivn.onrender.com/chat', {
         messages: newMessages,
-        user_id: user.id
+        user_id: user?.id || null
       });
 
       const reply = res.data?.response || "Sorry, I didn’t get that. Try again.";
       const updatedMessages = [...newMessages, { role: 'assistant', content: reply }];
       updateChat(chat.id, updatedMessages);
 
-      await saveChat(chat.id, chat.title, updatedMessages);
+      if (user) {
+        await saveChat(chat.id, chat.title, updatedMessages);
+      }
     } catch (error) {
       console.error("Error during AI chat:", error);
       updateChat(chat.id, [...newMessages, {
@@ -98,20 +101,41 @@ function Chat({ chat, updateChat }) {
       {showGuestWarning && (
         <div style={{
           position: 'absolute',
-          top: 10,
+          top: 60,
           left: '50%',
           transform: 'translateX(-50%)',
           background: '#ffcc00',
-          padding: '0.8rem 1.2rem',
+          padding: '1rem 1.5rem',
           color: '#000',
-          borderRadius: '8px',
+          borderRadius: '10px',
           fontWeight: 'bold',
-          boxShadow: '0 2px 6px rgba(0,0,0,0.2)',
-          zIndex: 9999
+          boxShadow: '0 4px 12px rgba(0,0,0,0.25)',
+          zIndex: 9999,
+          maxWidth: '90%',
+          textAlign: 'center',
+          animation: 'fadeSlideIn 0.4s ease-out'
         }}>
-          ⚠️ You are not logged in. Your chats won’t be saved.
+          ⚠️ You are not logged in. Your chats won’t be saved.<br />
+          <label style={{ marginTop: '0.5rem', display: 'block', fontWeight: 'normal' }}>
+            <input
+              type="checkbox"
+              onChange={(e) => {
+                setSuppressWarning(e.target.checked);
+                localStorage.setItem('suppressGuestWarning', e.target.checked);
+              }}
+            /> Don’t show this again
+          </label>
         </div>
       )}
+
+      <style>
+        {`
+          @keyframes fadeSlideIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+          }
+        `}
+      </style>
 
       {/* Title */}
       <div style={{
