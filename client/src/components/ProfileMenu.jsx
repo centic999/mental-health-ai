@@ -55,12 +55,23 @@ function ProfileMenu() {
   };
 
   const signInWithGoogle = async () => {
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: { redirectTo: window.location.href }
-    });
-    if (error) console.error('Google Sign-in error:', error.message);
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: window.location.href,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'select_account'
+          }
+        }
+      });
+      if (error) setFeedback(`Google sign-in error: ${error.message}`);
+    } catch (err) {
+      setFeedback("Unexpected error during Google login");
+    }
   };
+  
 
   const closeModal = () => {
     setAuthMode(null);
@@ -151,7 +162,6 @@ function ProfileMenu() {
           </button>
         </div>
       )}
-
       {authMode && (
         <div
           onClick={closeModal}
@@ -236,7 +246,11 @@ function ProfileMenu() {
               </button>
             </div>
 
-            <hr style={{ margin: '1.5rem 0', borderColor: '#444' }} />
+            <div style={{ marginTop: '1.5rem', marginBottom: '0.75rem', display: 'flex', alignItems: 'center' }}>
+              <div style={{ flex: 1, height: '1px', backgroundColor: '#444' }}></div>
+              <span style={{ margin: '0 0.75rem', color: '#888', fontSize: '0.9rem' }}>or</span>
+              <div style={{ flex: 1, height: '1px', backgroundColor: '#444' }}></div>
+            </div>
 
             <button
               onClick={signInWithGoogle}
@@ -271,6 +285,7 @@ function ProfileMenu() {
           </style>
         </div>
       )}
+
     </div>
   );
 }

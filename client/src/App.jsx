@@ -17,7 +17,15 @@ function App() {
       setUser(user);
     };
     fetchUser();
+  
+    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+        setUser(session.user);
+      }
+    });
+    return () => authListener?.subscription?.unsubscribe();
   }, []);
+  
 
   useEffect(() => {
     const loadChats = async () => {
