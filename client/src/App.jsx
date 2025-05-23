@@ -53,7 +53,7 @@ function App() {
   }, []);
 
   const createNewChat = async () => {
-    const id = uuidv4(); // ✅ this is a valid UUID
+    const id = uuidv4(); 
     const newChat = {
       id,
       title: "New Chat",

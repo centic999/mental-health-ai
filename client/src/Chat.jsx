@@ -2,34 +2,6 @@ import React, { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
 import { supabase } from './supabaseClient';
 
-
-const saveChat = async (chatId, chatTitle, messagesArray) => {
-  const {
-    data: { user },
-    error
-  } = await supabase.auth.getUser();
-
-  if (error || !user) {
-    console.warn("Not logged in, skipping save.");
-    return;
-  }
-
-  const { error: insertError } = await supabase.from('chats').upsert({
-    id: chatId,
-    user_id: user.id,
-    title: chatTitle,
-    messages: messagesArray
-  });
-
-  if (insertError) {
-    console.error("❌ Failed to save chat to Supabase:", insertError.message);
-  } else {
-    console.log("✅ Chat saved to Supabase:", chatTitle);
-  }
-};
-
-
-
 const formatAiMessage = (text) => {
   const lines = text.split(/(\d+\.\s+)/).filter(Boolean);
   if (lines.length < 3) return text;
@@ -45,38 +17,63 @@ const formatAiMessage = (text) => {
 function Chat({ chat, updateChat }) {
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [showGuestWarning, setShowGuestWarning] = useState(false);
   const chatEndRef = useRef(null);
+
+  const saveChat = async (chatId, chatTitle, messagesArray) => {
+    const {
+      data: { user },
+      error
+    } = await supabase.auth.getUser();
+
+    if (error || !user) {
+      console.warn("Not logged in, skipping save.");
+      return;
+    }
+
+    const { error: insertError } = await supabase.from('chats').upsert({
+      id: chatId,
+      user_id: user.id,
+      title: chatTitle,
+      messages: messagesArray
+    });
+
+    if (insertError) {
+      console.error("❌ Failed to save chat to Supabase:", insertError.message);
+    } else {
+      console.log("✅ Chat saved to Supabase:", chatTitle);
+    }
+  };
 
   const handleSend = async () => {
     if (!input.trim()) return;
-  
-    const newMessages = [...chat.messages, { role: "user", content: input }];
+
+    const newMessages = [...chat.messages, { role: 'user', content: input }];
     updateChat(chat.id, newMessages);
     setIsTyping(true);
     setInput('');
-  
+
     try {
       const {
         data: { user }
       } = await supabase.auth.getUser();
-  
+
       if (!user) {
-        alert('Not logged in');
+        setShowGuestWarning(true);
+        setTimeout(() => setShowGuestWarning(false), 5000);
         setIsTyping(false);
         return;
       }
-  
+
       const res = await axios.post('https://mental-health-ai-wivn.onrender.com/chat', {
         messages: newMessages,
         user_id: user.id
       });
-  
-      console.log("Full AI API response:", res.data);
-  
+
       const reply = res.data?.response || "Sorry, I didn’t get that. Try again.";
-      const updatedMessages = [...newMessages, { role: "assistant", content: reply }];
+      const updatedMessages = [...newMessages, { role: 'assistant', content: reply }];
       updateChat(chat.id, updatedMessages);
-  
+
       await saveChat(chat.id, chat.title, updatedMessages);
     } catch (error) {
       console.error("Error during AI chat:", error);
@@ -85,10 +82,9 @@ function Chat({ chat, updateChat }) {
         content: "Sorry, something went wrong."
       }]);
     }
-  
+
     setIsTyping(false);
   };
-  
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -99,6 +95,24 @@ function Chat({ chat, updateChat }) {
       className="chat-container-fade"
       style={{ flex: 1, height: '100vh', display: 'flex', flexDirection: 'column' }}
     >
+      {showGuestWarning && (
+        <div style={{
+          position: 'absolute',
+          top: 10,
+          left: '50%',
+          transform: 'translateX(-50%)',
+          background: '#ffcc00',
+          padding: '0.8rem 1.2rem',
+          color: '#000',
+          borderRadius: '8px',
+          fontWeight: 'bold',
+          boxShadow: '0 2px 6px rgba(0,0,0,0.2)',
+          zIndex: 9999
+        }}>
+          ⚠️ You are not logged in. Your chats won’t be saved.
+        </div>
+      )}
+
       {/* Title */}
       <div style={{
         position: 'sticky',
