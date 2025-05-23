@@ -19,8 +19,8 @@ function Chat({ chat, updateChat }) {
   const [isTyping, setIsTyping] = useState(false);
   const [showGuestWarning, setShowGuestWarning] = useState(false);
   const [suppressWarning, setSuppressWarning] = useState(
-    localStorage.getItem('suppressGuestWarning') === 'true'
-  );
+    sessionStorage.getItem('suppressGuestWarning') === 'true'
+  );  
   const chatEndRef = useRef(null);
 
   const saveChat = async (chatId, chatTitle, messagesArray) => {
@@ -102,8 +102,8 @@ function Chat({ chat, updateChat }) {
         <div style={{
           position: 'absolute',
           top: 60,
-          left: '50%',
-          transform: 'translateX(-50%)',
+          left: 'calc(50% - 200px)',
+          width: '400px',
           background: '#ffcc00',
           padding: '1rem 1.5rem',
           color: '#000',
@@ -121,8 +121,8 @@ function Chat({ chat, updateChat }) {
               type="checkbox"
               onChange={(e) => {
                 setSuppressWarning(e.target.checked);
-                localStorage.setItem('suppressGuestWarning', e.target.checked);
-              }}
+                sessionStorage.setItem('suppressGuestWarning', e.target.checked);
+              }}              
             /> Don’t show this again
           </label>
         </div>
@@ -241,14 +241,15 @@ function Chat({ chat, updateChat }) {
         />
         <button
           onClick={handleSend}
+          disabled={isTyping}
           style={{
             padding: '0.75rem 1.5rem',
-            background: '#4caf50',
+            background: isTyping ? '#888' : '#4caf50',
             color: 'white',
             border: 'none',
             borderRadius: '10px',
             fontWeight: 'bold',
-            cursor: 'pointer'
+            cursor: isTyping ? 'not-allowed' : 'pointer'
           }}
         >
           Send
