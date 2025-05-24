@@ -12,7 +12,9 @@ function App() {
   const [consentGiven, setConsentGiven] = useState(false);
   const [user, setUser] = useState(null);
   const [authFeedback, setAuthFeedback] = useState('');
-  const [termsAccepted, setTermsAccepted] = useState(false);
+  const [termsAccepted, setTermsAccepted] = useState(null); 
+
+
 
   const CURRENT_TERMS_VERSION = '2025-05-24';
 
@@ -37,38 +39,39 @@ useEffect(() => {
 
 
 
-  useEffect(() => {
-    const fetchUserAndSession = async () => {
-      const { data: { session }, error } = await supabase.auth.getSession();
-      if (error) {
-        setAuthFeedback('This Google account isn’t linked yet.');
-        setTimeout(() => setAuthFeedback(''), 5000);
-        return;
-      }
+useEffect(() => {
+  const fetchUserAndSession = async () => {
+    const { data: { session }, error } = await supabase.auth.getSession();
+    if (session?.user) {
+      setUser(session.user);
 
-      if (session?.user) {
-        setUser(session.user);
-        if (!session.user.confirmed_at) {
-          setAuthFeedback('Please check your email to confirm your account.');
-        } else {
-          setAuthFeedback('Welcome back!');
-        }
-
-        const acceptedThisSession = sessionStorage.getItem('termsAccepted') === 'true';
-        if (session.user.user_metadata?.termsAccepted === true || acceptedThisSession) {
-          setTermsAccepted(true);
-        }
-
-
-        setTimeout(() => setAuthFeedback(''), 5000);
+      if (!session.user.confirmed_at) {
+        setAuthFeedback('Please check your email to confirm your account.');
       } else {
-        const local = localStorage.getItem("termsAccepted");
-        if (local === 'true') setTermsAccepted(true);
+        setAuthFeedback('Welcome back!');
       }
-    };
 
-    fetchUserAndSession();
-  }, []);
+      const storedVersion = session.user.user_metadata?.termsVersion;
+      if (storedVersion !== CURRENT_TERMS_VERSION) {
+        setTermsAccepted(false);
+      } else {
+        setTermsAccepted(true);
+      }
+
+      setTimeout(() => setAuthFeedback(''), 5000);
+    } else {
+      const local = localStorage.getItem("termsAcceptedVersion");
+      if (local === CURRENT_TERMS_VERSION) {
+        setTermsAccepted(true);
+      } else {
+        setTermsAccepted(false);
+      }
+    }
+  };
+
+  fetchUserAndSession();
+}, []);
+
 
   useEffect(() => {
     const loadChats = async () => {
@@ -190,9 +193,14 @@ useEffect(() => {
 
   const activeChat = chats.find((c) => c.id === activeChatId);
 
+  if (termsAccepted === null) {
+    return null; // Don't render anything until the check is complete
+  }
+  
   if (!termsAccepted) {
     return <TermsModal onAccept={handleAcceptTerms} />;
   }
+  
 
   if (!consentGiven) {
     return (
