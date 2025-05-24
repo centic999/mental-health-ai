@@ -187,6 +187,14 @@ def detect_topic(user_input):
             return source
     return None
 
+DISCLAIMER = (
+    "\n\n🩺 Please consult a licensed healthcare provider before making any decisions based on this information.\n"
+    "⚠️ Disclaimer: This AI is for informational support only. It does not provide medical diagnosis or treatment. "
+    "Always consult a licensed healthcare professional. We are not liable for decisions made based on this conversation."
+)
+
+def attach_disclaimer(text):
+    return text.strip() + DISCLAIMER
 
 
 # === APP SETUP ===
@@ -278,8 +286,9 @@ async def chat(request: Request):
             )
 
             result = response.json()
-            ai_response = result.get("text", "Sorry, something went wrong.")
+            ai_response = attach_disclaimer(result.get("text", "Sorry, something went wrong."))
             return {"response": ai_response, "source": source}
+
 
         else:
             raise Exception("Missing 'text' in Cohere response")
@@ -307,7 +316,7 @@ async def fallback_openrouter(messages, user_input):
         )
         result = response.json()
         if "choices" in result:
-            fallback_response = result["choices"][0]["message"]["content"]
+            fallback_response = attach_disclaimer(result["choices"][0]["message"]["content"])
             source = detect_topic(user_input)
             log_decision(user_input, "openrouter/mistral-7b", "fallback model", fallback_response)
             return {
