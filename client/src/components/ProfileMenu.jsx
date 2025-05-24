@@ -274,6 +274,11 @@ function ProfileMenu() {
               <img src="/google-icon.svg" alt="Google" style={{ width: '20px', height: '20px' }} />
               Continue with Google
             </button>
+
+            <p style={{ color: '#888', fontSize: '0.85rem', marginTop: '1.25rem', textAlign: 'center' }}>
+              Email and password accounts require Login or Sign Up to be chosen manually.<br />
+              Google will automatically log you in or create an account.
+            </p>
           </div>
 
           <style>
