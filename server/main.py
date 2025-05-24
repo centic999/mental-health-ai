@@ -32,134 +32,148 @@ def is_crisis(text):
     return any(kw in text.lower() for kw in CRISIS_KEYWORDS)
 
 # === MEDICAL SOURCE MAP ===
-CITATION_MAP = {
-    "anxiety": {
+CITATION_MAP_EXPANDED = {
+    # Anxiety and panic
+    "anxiety|anxious|worry|nervous|panic|overthinking|restless|fearful|shaky|tight chest|sweaty palms|racing thoughts": {
         "title": "Anxiety Disorders",
         "url": "https://www.nimh.nih.gov/health/topics/anxiety-disorders",
         "provider": "NIMH"
     },
-    "depression": {
-        "title": "Depression Overview",
-        "url": "https://www.mayoclinic.org/diseases-conditions/depression/symptoms-causes/syc-20356007",
-        "provider": "Mayo Clinic"
-    },
-    "ptsd": {
-        "title": "PTSD Basics",
-        "url": "https://www.nimh.nih.gov/health/topics/post-traumatic-stress-disorder-ptsd",
-        "provider": "NIMH"
-    },
-    "bipolar": {
-        "title": "Bipolar Disorder",
-        "url": "https://www.nimh.nih.gov/health/topics/bipolar-disorder",
-        "provider": "NIMH"
-    },
-    "ocd": {
-        "title": "Obsessive-Compulsive Disorder",
-        "url": "https://www.nimh.nih.gov/health/topics/obsessive-compulsive-disorder-ocd",
-        "provider": "NIMH"
-    },
-    "adhd": {
-        "title": "ADHD in Teens and Adults",
-        "url": "https://www.cdc.gov/ncbddd/adhd/index.html",
-        "provider": "CDC"
-    },
-    "grief": {
-        "title": "Coping with Grief and Loss",
-        "url": "https://www.hopkinsmedicine.org/health/wellness-and-prevention/coping-with-grief-and-loss",
-        "provider": "Johns Hopkins"
-    },
-    "insomnia": {
-        "title": "Insomnia – Symptoms and Causes",
-        "url": "https://www.mayoclinic.org/diseases-conditions/insomnia/symptoms-causes/syc-20355167",
-        "provider": "Mayo Clinic"
-    },
-    "self harm": {
-        "title": "Understanding Self-Harm",
-        "url": "https://www.nimh.nih.gov/health/publications/self-harm",
-        "provider": "NIMH"
-    },
-    "eating disorder": {
-        "title": "Eating Disorders Overview",
-        "url": "https://www.nimh.nih.gov/health/topics/eating-disorders",
-        "provider": "NIMH"
-    },
-    "panic attacks": {
+    "panic attack|heart racing|hyperventilating|chest pain|suffocating|losing control": {
         "title": "Panic Disorder",
         "url": "https://www.nimh.nih.gov/health/topics/panic-disorder",
         "provider": "NIMH"
     },
-    "substance abuse": {
-        "title": "Substance Use Treatment",
-        "url": "https://www.samhsa.gov/find-help/national-helpline",
-        "provider": "SAMHSA"
+
+    # Depression
+    "depression|depressed|sadness|hopeless|empty|worthless|low mood|no energy|can't get up|crying spells|feeling numb": {
+        "title": "Depression Overview",
+        "url": "https://www.mayoclinic.org/diseases-conditions/depression/symptoms-causes/syc-20356007",
+        "provider": "Mayo Clinic"
     },
-    "alcohol": {
-        "title": "Alcohol Use Disorder",
-        "url": "https://www.niaaa.nih.gov/alcohols-effects-health/alcohol-use-disorder",
-        "provider": "NIAAA"
+
+    # PTSD
+    "ptsd|trauma|flashbacks|nightmares|hypervigilance|startled|military trauma|emotional numbing": {
+        "title": "PTSD Basics",
+        "url": "https://www.nimh.nih.gov/health/topics/post-traumatic-stress-disorder-ptsd",
+        "provider": "NIMH"
     },
-    "addiction": {
-        "title": "Understanding Drug Use and Addiction",
-        "url": "https://nida.nih.gov/publications/drugfacts/understanding-drug-use-addiction",
-        "provider": "NIDA"
+
+    # Bipolar
+    "bipolar|manic|mania|mood swings|high energy|impulsive behavior|sleep less|irritable mood": {
+        "title": "Bipolar Disorder",
+        "url": "https://www.nimh.nih.gov/health/topics/bipolar-disorder",
+        "provider": "NIMH"
     },
-    "autism": {
+
+    # OCD
+    "ocd|obsessive|compulsions|rituals|cleaning|checking|intrusive thoughts|contamination": {
+        "title": "Obsessive-Compulsive Disorder",
+        "url": "https://www.nimh.nih.gov/health/topics/obsessive-compulsive-disorder-ocd",
+        "provider": "NIMH"
+    },
+
+    # ADHD
+    "adhd|attention|hyperactivity|impulsive|distracted|focus issues|can't sit still|zoning out": {
+        "title": "ADHD",
+        "url": "https://www.cdc.gov/ncbddd/adhd/index.html",
+        "provider": "CDC"
+    },
+
+    # Autism
+    "autism|asd|developmental disorder|social cues|nonverbal|routine behaviors": {
         "title": "Autism Spectrum Disorder",
         "url": "https://www.nimh.nih.gov/health/topics/autism-spectrum-disorders-asd",
         "provider": "NIMH"
     },
-    "schizophrenia": {
-        "title": "Schizophrenia",
-        "url": "https://www.nimh.nih.gov/health/topics/schizophrenia",
+
+    # Eating disorders
+    "eating disorder|anorexia|bulimia|binge eating|restricting food|body image issues|purging": {
+        "title": "Eating Disorders",
+        "url": "https://www.nimh.nih.gov/health/topics/eating-disorders",
         "provider": "NIMH"
     },
-    "social anxiety": {
-        "title": "Social Anxiety Disorder",
-        "url": "https://www.nimh.nih.gov/health/publications/social-anxiety-disorder-more-than-just-shyness",
+
+    # Sleep disorders
+    "insomnia|sleep problems|can't sleep|waking up|tossing and turning|sleep schedule|overthinking at night": {
+        "title": "Insomnia",
+        "url": "https://www.mayoclinic.org/diseases-conditions/insomnia/symptoms-causes/syc-20355167",
+        "provider": "Mayo Clinic"
+    },
+
+    # Self harm
+    "self harm|cutting|hurting myself|burning|scratching|bleeding|pain as relief": {
+        "title": "Understanding Self-Harm",
+        "url": "https://www.nimh.nih.gov/health/publications/self-harm",
         "provider": "NIMH"
     },
-    "suicidal thoughts": {
+
+    # Suicide
+    "suicide|suicidal|want to die|ending it|give up|no reason to live|life is meaningless": {
         "title": "Suicide Prevention",
         "url": "https://www.nimh.nih.gov/health/topics/suicide-prevention",
         "provider": "NIMH"
     },
-    "mental health": {
-        "title": "Mental Health Overview",
+
+    # Substance use
+    "addiction|addicted|craving|drug abuse|alcoholism|dependency|can't stop using": {
+        "title": "Substance Use and Addiction",
+        "url": "https://nida.nih.gov/publications/drugfacts/understanding-drug-use-addiction",
+        "provider": "NIDA"
+    },
+
+    # Alcohol
+    "alcohol|alcoholic|binge drinking|blackout|drinking problem|drinking alone": {
+        "title": "Alcohol Use Disorder",
+        "url": "https://www.niaaa.nih.gov/alcohols-effects-health/alcohol-use-disorder",
+        "provider": "NIAAA"
+    },
+
+    # Grief
+    "grief|loss|mourning|bereavement|death of loved one|passed away": {
+        "title": "Coping with Grief",
+        "url": "https://www.hopkinsmedicine.org/health/wellness-and-prevention/coping-with-grief-and-loss",
+        "provider": "Johns Hopkins"
+    },
+
+    # Social anxiety
+    "social anxiety|fear of judgment|shy|public speaking fear|avoid people": {
+        "title": "Social Anxiety",
+        "url": "https://www.nimh.nih.gov/health/publications/social-anxiety-disorder-more-than-just-shyness",
+        "provider": "NIMH"
+    },
+
+    # General mental health
+    "mental health|emotional wellbeing|psychological support|feel overwhelmed": {
+        "title": "Mental Health Basics",
         "url": "https://www.cdc.gov/mentalhealth/index.htm",
         "provider": "CDC"
     },
-    "therapy": {
-        "title": "Psychotherapy Basics",
+
+    # Therapy
+    "therapy|counseling|therapist|psychologist|talking to someone|cbt|dbt": {
+        "title": "Psychotherapy Overview",
         "url": "https://www.nimh.nih.gov/health/topics/psychotherapies",
         "provider": "NIMH"
     },
-    "coping": {
+
+    # Coping
+    "coping|stress relief|managing emotions|grounding techniques|self care|relaxation": {
         "title": "Coping with Stress",
         "url": "https://www.cdc.gov/mentalhealth/stress-coping/cope-with-stress/index.html",
         "provider": "CDC"
     },
-    "burnout": {
-        "title": "Burnout: The Modern Epidemic",
+
+    # Burnout
+    "burnout|job stress|exhaustion|overworked|emotionally drained": {
+        "title": "Burnout",
         "url": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC8672751/",
         "provider": "BMJ"
     },
-    "child trauma": {
-        "title": "Understanding Child Trauma",
-        "url": "https://www.nctsn.org/what-is-child-trauma",
-        "provider": "NCTSN"
-    },
-    "loneliness": {
-        "title": "Loneliness and Health",
-        "url": "https://www.nia.nih.gov/news/loneliness-and-social-isolation-are-serious-public-health-risks",
-        "provider": "NIH"
-    },
-    "anger": {
-        "title": "Managing Anger",
-        "url": "https://www.apa.org/topics/anger/control",
-        "provider": "APA"
-    },
-    "meditation": {
-        "title": "Mindfulness Meditation for Mental Health",
+
+    # Mindfulness
+    "meditation|mindfulness|deep breathing|relaxation|guided meditation": {
+        "title": "Mindfulness for Mental Health",
         "url": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3679190/",
         "provider": "Lancet Psychiatry"
     }
@@ -167,10 +181,13 @@ CITATION_MAP = {
 
 
 def detect_topic(user_input):
-    for keyword in CITATION_MAP:
-        if keyword in user_input.lower():
-            return CITATION_MAP[keyword]
+    text = user_input.lower()
+    for keyword_group, source in CITATION_MAP.items():
+        if any(kw.strip() in text for kw in keyword_group.split("|")):
+            return source
     return None
+
+
 
 # === APP SETUP ===
 app = FastAPI()
@@ -235,13 +252,35 @@ async def chat(request: Request):
         )
         result = response.json()
         if "text" in result:
-            ai_response = result["text"]
             source = detect_topic(user_input)
-            log_decision(user_input, "cohere/command-light", "strict mental health assistant", ai_response)
-            return {
-                "response": ai_response,
-                "source": source
-            }
+            # Inject trusted source into prompt
+            context = source["title"] + ":\n" + source["url"] if source else ""
+            preamble = (
+                "You are a mental health assistant. Only use trusted information from the provided source:\n\n"
+                f"{context}\n\n"
+                "Only give factual, supportive, emotionally safe answers. Do not speculate or make unsupported claims."
+            )
+
+            response = requests.post(
+                "https://api.cohere.ai/v1/chat",
+                headers={
+                    "Authorization": f"Bearer {COHERE_API_KEY}",
+                    "Content-Type": "application/json"
+                },
+                json={
+                    "chat_history": formatted[:-1],
+                    "message": formatted[-1]["message"],
+                    "model": "command-light",
+                    "temperature": 0.7,
+                    "max_tokens": 300,
+                    "preamble": preamble
+                }
+            )
+
+            result = response.json()
+            ai_response = result.get("text", "Sorry, something went wrong.")
+            return {"response": ai_response, "source": source}
+
         else:
             raise Exception("Missing 'text' in Cohere response")
 
