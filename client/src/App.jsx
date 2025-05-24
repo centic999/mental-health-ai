@@ -12,66 +12,35 @@ function App() {
   const [consentGiven, setConsentGiven] = useState(false);
   const [user, setUser] = useState(null);
   const [authFeedback, setAuthFeedback] = useState('');
-  const [termsAccepted, setTermsAccepted] = useState(null); 
-
-
+  const [termsAccepted, setTermsAccepted] = useState(false);
 
   const CURRENT_TERMS_VERSION = '2025-05-24';
 
-useEffect(() => {
-  const fetchUserAndSession = async () => {
-    const { data: { session }, error } = await supabase.auth.getSession();
-    if (session?.user) {
-      const storedVersion = session.user.user_metadata?.termsVersion;
-      if (storedVersion !== CURRENT_TERMS_VERSION) {
-        setTermsAccepted(false);
-      } else {
-        setTermsAccepted(true);
-      }
-    } else {
-      const local = localStorage.getItem("termsAcceptedVersion");
-      if (local === CURRENT_TERMS_VERSION) setTermsAccepted(true);
-    }
-  };
+  useEffect(() => {
+    const fetchUserAndSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
 
-  fetchUserAndSession(); 
-}, []); 
+      if (session?.user) {
+        setUser(session.user);
+        if (!session.user.confirmed_at) {
+          setAuthFeedback('Please check your email to confirm your account.');
+        } else {
+          setAuthFeedback('Welcome back!');
+        }
 
-
-
-useEffect(() => {
-  const fetchUserAndSession = async () => {
-    const { data: { session }, error } = await supabase.auth.getSession();
-    if (session?.user) {
-      setUser(session.user);
-
-      if (!session.user.confirmed_at) {
-        setAuthFeedback('Please check your email to confirm your account.');
-      } else {
-        setAuthFeedback('Welcome back!');
+        setTimeout(() => setAuthFeedback(''), 5000);
       }
 
-      const storedVersion = session.user.user_metadata?.termsVersion;
-      if (storedVersion !== CURRENT_TERMS_VERSION) {
-        setTermsAccepted(false);
-      } else {
-        setTermsAccepted(true);
-      }
-
-      setTimeout(() => setAuthFeedback(''), 5000);
-    } else {
       const local = localStorage.getItem("termsAcceptedVersion");
       if (local === CURRENT_TERMS_VERSION) {
         setTermsAccepted(true);
       } else {
         setTermsAccepted(false);
       }
-    }
-  };
+    };
 
-  fetchUserAndSession();
-}, []);
-
+    fetchUserAndSession();
+  }, []);
 
   useEffect(() => {
     const loadChats = async () => {
@@ -104,13 +73,10 @@ useEffect(() => {
   const handleAcceptTerms = async () => {
     if (user) {
       await supabase.auth.updateUser({ data: { termsAccepted: true, termsVersion: CURRENT_TERMS_VERSION } });
-    } else {
-      localStorage.setItem("termsAcceptedVersion", CURRENT_TERMS_VERSION);
     }
+    localStorage.setItem("termsAcceptedVersion", CURRENT_TERMS_VERSION);
     setTermsAccepted(true);
   };
-  
-  
 
   const createNewChat = async () => {
     const id = uuidv4();
@@ -193,20 +159,12 @@ useEffect(() => {
 
   const activeChat = chats.find((c) => c.id === activeChatId);
 
-  if (termsAccepted === null) {
-    return null; // Don't render anything until the check is complete
-  }
-  
-  if (!termsAccepted) {
-    return <TermsModal onAccept={handleAcceptTerms} />;
-  }
-  
+  if (!termsAccepted) return <TermsModal onAccept={handleAcceptTerms} />;
 
   if (!consentGiven) {
     return (
       <div style={{
-        position: 'fixed',
-        top: 0, left: 0,
+        position: 'fixed', top: 0, left: 0,
         width: '100vw', height: '100vh',
         background: 'linear-gradient(to bottom right, #1e1e1e, #2c2c2c)',
         display: 'flex', justifyContent: 'center', alignItems: 'center',
@@ -241,15 +199,6 @@ useEffect(() => {
             Agree and Continue
           </button>
         </div>
-
-        <style>
-          {`
-            @keyframes fadeSlideUp {
-              from { opacity: 0; transform: translateY(30px); }
-              to { opacity: 1; transform: translateY(0); }
-            }
-          `}
-        </style>
       </div>
     );
   }
@@ -279,8 +228,7 @@ useEffect(() => {
             padding: '10px 20px',
             borderRadius: '8px',
             fontWeight: 'bold',
-            zIndex: 9999,
-            animation: 'fadeSlideDown 0.3s ease-out'
+            zIndex: 9999
           }}>
             {authFeedback}
           </div>
