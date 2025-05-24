@@ -37,15 +37,20 @@ function ProfileMenu() {
     if (!email || !password) return setFeedback('Email and password required');
 
     if (authMode === 'signup') {
-      const { data, error } = await supabase.auth.signUp({ email, password });
-      if (error) {
-        if (error.message.toLowerCase().includes("already registered")) {
-          return setFeedback("⚠️ An account already exists with that email. Please log in.");
-        }
-        return setFeedback("❌ " + error.message);
+      const { error: loginCheckError } = await supabase.auth.signInWithPassword({
+        email,
+        password: 'fake-password-check'
+      });
+    
+      if (!loginCheckError || loginCheckError.message.toLowerCase().includes("invalid login credentials")) {
+        return setFeedback("⚠️ An account already exists with that email. Please log in.");
       }
-      return setFeedback('✅ Please check your email to confirm your account.');
-    }
+    
+      const { error } = await supabase.auth.signUp({ email, password });
+      if (error) return setFeedback("❌ " + error.message);
+    
+      return setFeedback("✅ Please check your email to confirm your account.");
+    }    
 
     if (authMode === 'login') {
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
