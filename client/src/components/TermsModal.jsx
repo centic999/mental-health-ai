@@ -1,55 +1,61 @@
-import React, { useState } from 'react';
+import React from 'react';
+import TermsOfService from './TermsOfService';
 
-function TermsModal({ onAccept }) {
-  const [checked, setChecked] = useState(false);
-
+export default function TermsModal({ onAccept }) {
   return (
-    <div style={{
-      position: 'fixed',
-      top: 0, left: 0, width: '100vw', height: '100vh',
-      background: 'rgba(0,0,0,0.9)',
-      display: 'flex', justifyContent: 'center', alignItems: 'center',
-      zIndex: 9999
-    }}>
-      <div style={{
-        background: '#1e1e1e',
-        padding: '2rem',
-        borderRadius: '12px',
-        width: '90%',
-        maxWidth: '600px',
-        maxHeight: '80vh',
-        overflowY: 'auto',
-        boxShadow: '0 0 15px rgba(114, 255, 175, 0.3)'
-      }}>
-        <h2 style={{ color: '#72ffaf' }}>Terms of Service</h2>
-        <p style={{ color: '#ccc', fontSize: '0.95rem', lineHeight: 1.6 }}>
-          By using this app, you agree that this is not a substitute for medical treatment, that no diagnosis will be made, and that you must confirm all health-related suggestions with a licensed professional. We are not liable for outcomes. Conversations may be logged securely with your consent. Full details are in the privacy policy. Usage is subject to HIPAA, GDPR, and your region’s data guidelines.
-        </p>
+    <div
+      style={{
+        position: 'fixed',
+        top: 0, left: 0,
+        width: '100vw', height: '100vh',
+        background: 'rgba(0, 0, 0, 0.85)',
+        display: 'flex', justifyContent: 'center', alignItems: 'center',
+        zIndex: 10000
+      }}
+    >
+      <div
+        style={{
+          width: '90%',
+          maxWidth: '850px',
+          maxHeight: '90vh',
+          overflowY: 'auto',
+          background: '#1e1e1e',
+          padding: '2rem',
+          borderRadius: '12px',
+          border: '1px solid #72ffaf',
+          boxShadow: '0 0 20px rgba(114, 255, 175, 0.3)',
+          animation: 'fadeSlideUp 0.6s ease-out'
+        }}
+      >
+        <TermsOfService />
 
-        <label style={{ display: 'block', marginTop: '1.5rem', color: '#ccc' }}>
-          <input type="checkbox" onChange={(e) => setChecked(e.target.checked)} /> I agree to the Terms of Service
-        </label>
-
-        <button
-          disabled={!checked}
-          onClick={onAccept}
-          style={{
-            marginTop: '1rem',
-            background: checked ? '#4caf50' : '#444',
-            color: '#fff',
-            padding: '0.6rem 1.2rem',
-            border: 'none',
-            borderRadius: '8px',
-            fontWeight: 'bold',
-            cursor: checked ? 'pointer' : 'not-allowed',
-            width: '100%'
-          }}
-        >
-          Accept and Continue
-        </button>
+        <div style={{ textAlign: 'center', marginTop: '2rem' }}>
+          <button
+            onClick={onAccept}
+            style={{
+              background: '#4caf50',
+              color: 'white',
+              padding: '0.8rem 2rem',
+              fontSize: '1rem',
+              fontWeight: 'bold',
+              border: 'none',
+              borderRadius: '8px',
+              cursor: 'pointer'
+            }}
+          >
+            I Accept
+          </button>
+        </div>
       </div>
+
+      <style>
+        {`
+          @keyframes fadeSlideUp {
+            from { opacity: 0; transform: translateY(40px); }
+            to { opacity: 1; transform: translateY(0); }
+          }
+        `}
+      </style>
     </div>
   );
 }
-
-export default TermsModal;

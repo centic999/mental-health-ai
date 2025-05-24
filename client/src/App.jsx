@@ -48,10 +48,7 @@ function App() {
   useEffect(() => {
     const loadChats = async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        console.warn("Not logged in. Skipping chat load.");
-        return;
-      }
+      if (!user) return;
 
       const { data, error } = await supabase
         .from('chats')
@@ -87,11 +84,7 @@ function App() {
 
   const createNewChat = async () => {
     const id = uuidv4();
-    const newChat = {
-      id,
-      title: "New Chat",
-      messages: []
-    };
+    const newChat = { id, title: "New Chat", messages: [] };
 
     setChats((prev) => [newChat, ...prev]);
     setActiveChatId(id);
@@ -126,11 +119,14 @@ function App() {
   const deleteChat = async (id) => {
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
-      const { error } = await supabase.from('chats').delete().eq('id', id).eq('user_id', user.id);
-      if (error) console.error("❌ Failed to delete chat from Supabase:", error.message);
+      const { error } = await supabase.from('chats')
+        .delete()
+        .eq('id', id)
+        .eq('user_id', user.id);
+      if (error) console.error("❌ Failed to delete chat:", error.message);
     }
 
-    setChats((prev) => prev.filter((chat) => chat.id !== id));
+    setChats((prev) => prev.filter(chat => chat.id !== id));
     if (activeChatId === id) setActiveChatId(null);
   };
 
@@ -174,14 +170,16 @@ function App() {
   if (!consentGiven) {
     return (
       <div style={{
-        position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh',
+        position: 'fixed',
+        top: 0, left: 0,
+        width: '100vw', height: '100vh',
         background: 'linear-gradient(to bottom right, #1e1e1e, #2c2c2c)',
         display: 'flex', justifyContent: 'center', alignItems: 'center',
         zIndex: 1000, animation: 'fadeSlideUp 0.8s ease-out'
       }}>
         <div style={{
-          background: '#1e1e1e', padding: '2rem', borderRadius: '12px',
-          boxShadow: '0 0 20px rgba(114, 255, 175, 0.3)',
+          background: '#1e1e1e', padding: '2rem',
+          borderRadius: '12px', boxShadow: '0 0 20px rgba(114, 255, 175, 0.3)',
           textAlign: 'center', maxWidth: '90%', width: '400px',
           animation: 'fadeSlideUp 0.8s ease-out'
         }}>
@@ -195,9 +193,14 @@ function App() {
           <button
             onClick={() => setConsentGiven(true)}
             style={{
-              background: '#4caf50', color: 'white', border: 'none',
-              padding: '0.6rem 1.2rem', fontSize: '1rem',
-              borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold'
+              background: '#4caf50',
+              color: 'white',
+              border: 'none',
+              padding: '0.6rem 1.2rem',
+              fontSize: '1rem',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              fontWeight: 'bold'
             }}
           >
             Agree and Continue
@@ -233,11 +236,15 @@ function App() {
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', position: 'relative' }}>
         {authFeedback && (
           <div style={{
-            position: 'absolute', top: 10, left: '50%',
+            position: 'absolute',
+            top: 10, left: '50%',
             transform: 'translateX(-50%)',
-            background: '#ffcc00', color: 'black',
-            padding: '10px 20px', borderRadius: '8px',
-            fontWeight: 'bold', zIndex: 9999,
+            background: '#ffcc00',
+            color: 'black',
+            padding: '10px 20px',
+            borderRadius: '8px',
+            fontWeight: 'bold',
+            zIndex: 9999,
             animation: 'fadeSlideDown 0.3s ease-out'
           }}>
             {authFeedback}
@@ -248,15 +255,23 @@ function App() {
           <Chat chat={activeChat} updateChat={updateChat} />
         ) : (
           <div className="landing-fade" style={{
-            flex: 1, display: 'flex', flexDirection: 'column',
-            justifyContent: 'center', alignItems: 'center',
-            textAlign: 'center', padding: '2rem',
-            color: '#f5f5f5', fontFamily: 'Segoe UI, sans-serif',
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            alignItems: 'center',
+            textAlign: 'center',
+            padding: '2rem',
+            color: '#f5f5f5',
+            fontFamily: 'Segoe UI, sans-serif',
             background: 'linear-gradient(to bottom right, #1e1e1e, #2c2c2c)'
           }}>
             <h1 style={{
-              fontSize: '2.8rem', fontWeight: 'bold', marginBottom: '1rem',
-              color: '#72ffaf', textShadow: '0 0 10px rgba(114, 255, 175, 0.2)'
+              fontSize: '2.8rem',
+              fontWeight: 'bold',
+              marginBottom: '1rem',
+              color: '#72ffaf',
+              textShadow: '0 0 10px rgba(114, 255, 175, 0.2)'
             }}>
               HelpLineAi
             </h1>
