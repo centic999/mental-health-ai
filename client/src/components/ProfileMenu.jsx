@@ -38,39 +38,12 @@ function ProfileMenu() {
       return setFeedback('Email and password required');
     }
   
-    if (authMode === 'signup') {
-      // Step 1: Try to log in first to check if user exists
-      const { data: loginCheck, error: loginError } = await supabase.auth.signInWithPassword({ email, password });
-  
-      if (loginCheck?.user) {
-        if (!loginCheck.user.confirmed_at) {
-          return setFeedback("📧 This account already exists but hasn't been confirmed. Please check your email.");
-        } else {
-          return setFeedback("⚠️ An account already exists with that email. Please log in.");
-        }
-      }
-  
-      // Step 2: If login fails due to invalid creds, proceed with signup
-      if (loginError?.message.toLowerCase().includes("invalid login credentials")) {
-        const { data: signUpData, error: signUpError } = await supabase.auth.signUp({ email, password });
-  
-        if (signUpError) {
-          return setFeedback("❌ " + signUpError.message);
-        }
-  
-        return setFeedback("✅ Please check your email to confirm your account.");
-      }
-  
-      // Catch-all error
-      return setFeedback("❌ " + (loginError?.message || 'Signup failed.'));
-    }
-  
     if (authMode === 'login') {
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
   
       if (error) {
         if (error.message.toLowerCase().includes("invalid login credentials")) {
-          return setFeedback("⚠️ Account not found. Please sign up.");
+          return setFeedback("❌ Invalid email or password.");
         }
         return setFeedback("❌ " + error.message);
       }
@@ -82,7 +55,27 @@ function ProfileMenu() {
   
       window.location.reload();
     }
+  
+    if (authMode === 'signup') {
+      // Check if account exists before signup
+      const { error: loginError } = await supabase.auth.signInWithPassword({ email, password });
+  
+      if (!loginError || (loginError && !loginError.message.toLowerCase().includes("invalid login credentials"))) {
+        // If no login error or it's not "invalid credentials", account exists
+        return setFeedback("⚠️ An account already exists with that email. Please log in.");
+      }
+  
+      // Proceed with signup if account truly doesn't exist
+      const { error: signUpError } = await supabase.auth.signUp({ email, password });
+  
+      if (signUpError) {
+        return setFeedback("❌ " + signUpError.message);
+      }
+  
+      return setFeedback("✅ Please check your email to confirm your account.");
+    }
   };
+  
   
 
   const signInWithGoogle = async () => {
