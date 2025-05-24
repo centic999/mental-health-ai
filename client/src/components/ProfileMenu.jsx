@@ -37,38 +37,48 @@ function ProfileMenu() {
     if (!email || !password) return setFeedback('Email and password required');
 
     if (authMode === 'signup') {
-      const { error } = await supabase.auth.signUp({ email, password });
+      const { data, error } = await supabase.auth.signUp({ email, password });
       if (error) {
         if (error.message.includes("already registered")) {
           return setFeedback("⚠️ An account already exists with that email.");
         }
         return setFeedback(error.message);
       }
-      setFeedback('✅ Check your email to confirm sign up.');
+      setFeedback('✅ Please check your email to confirm your account.');
     }
 
     if (authMode === 'login') {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) return setFeedback(error.message);
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) {
+        if (error.message.toLowerCase().includes("invalid login credentials")) {
+          return setFeedback("⚠️ Account not found. Please sign up.");
+        }
+        return setFeedback(error.message);
+      }
       window.location.reload();
     }
   };
 
   const signInWithGoogle = async () => {
+    const win = window.open('', '_blank');
     try {
-      await supabase.auth.signInWithOAuth({
+      const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: window.location.origin // or a custom callback page
+          redirectTo: window.location.origin
         }
       });
+      if (error) {
+        setFeedback("⚠️ Google login failed. Try again.");
+        win?.close();
+      } else {
+        win.location.href = data?.url;
+      }
     } catch (err) {
-      setFeedback("⚠️ Google login failed. Try again.");
+      setFeedback("⚠️ Google login failed.");
+      win?.close();
     }
   };
-  
-  
-  
 
   const closeModal = () => {
     setAuthMode(null);
@@ -159,6 +169,7 @@ function ProfileMenu() {
           </button>
         </div>
       )}
+
       {authMode && (
         <div
           onClick={closeModal}
@@ -282,7 +293,6 @@ function ProfileMenu() {
           </style>
         </div>
       )}
-
     </div>
   );
 }
