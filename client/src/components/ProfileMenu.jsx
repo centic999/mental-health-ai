@@ -3,7 +3,9 @@ import { supabase } from '../supabaseClient';
 
 function ProfileMenu() {
   const [user, setUser] = useState(null);
-  const [authMode, setAuthMode] = useState(false);
+  const [authMode, setAuthMode] = useState(null); // "login" | "signup"
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [feedback, setFeedback] = useState('');
   const [showDropdown, setShowDropdown] = useState(false);
   const modalRef = useRef(null);
@@ -17,48 +19,68 @@ function ProfileMenu() {
   }, []);
 
   useEffect(() => {
-    const checkLoginFeedback = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      const user = session?.user;
-      if (!user) return;
-
-      setUser(user);
-
-      if (!user.confirmed_at) {
-        setFeedback('📧 Please confirm your email to finish logging in.');
-      } else if (user.created_at === user.last_sign_in_at) {
-        setFeedback('🎉 Welcome! Account created.');
-      } else {
-        setFeedback('👋 Welcome back!');
-      }
-
-      setTimeout(() => setFeedback(''), 5000);
+    const handleKeyDown = (e) => {
+      if (authMode && e.key === 'Escape') closeModal();
+      if (authMode && e.key === 'Enter') handleAuthSubmit();
     };
-
-    checkLoginFeedback();
-  }, []);
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [authMode, email, password]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
     window.location.reload();
   };
 
+  const handleAuthSubmit = async () => {
+    setFeedback('');
+    if (!email || !password) return setFeedback('Email and password required');
+
+    if (authMode === 'signup') {
+      const { data, error } = await supabase.auth.signUp({ email, password });
+      if (error) {
+        if (error.message.toLowerCase().includes("already registered")) {
+          return setFeedback("⚠️ An account already exists with that email. Please log in.");
+        }
+        return setFeedback("❌ " + error.message);
+      }
+      return setFeedback('✅ Please check your email to confirm your account.');
+    }
+
+    if (authMode === 'login') {
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) {
+        if (error.message.toLowerCase().includes("invalid login credentials")) {
+          return setFeedback("⚠️ Account not found. Please sign up.");
+        }
+        return setFeedback("❌ " + error.message);
+      }
+
+      const user = data.user;
+      if (user && !user.confirmed_at) {
+        return setFeedback("📧 Please check your email to confirm your account.");
+      }
+
+      window.location.reload();
+    }
+  };
+
   const signInWithGoogle = async () => {
-    setFeedback('Redirecting to Google...');
+    setFeedback("Redirecting to Google...");
     try {
       await supabase.auth.signInWithOAuth({
         provider: 'google',
-        options: {
-          redirectTo: window.location.origin,
-        }
+        options: { redirectTo: window.location.origin }
       });
     } catch (err) {
-      setFeedback("⚠️ Google login failed.");
+      setFeedback("❌ Google sign-in failed.");
     }
   };
 
   const closeModal = () => {
-    setAuthMode(false);
+    setAuthMode(null);
+    setEmail('');
+    setPassword('');
     setFeedback('');
   };
 
@@ -113,20 +135,22 @@ function ProfileMenu() {
           )}
         </>
       ) : (
-        <button
-          onClick={() => setAuthMode(true)}
-          style={{
-            padding: '0.5rem 1rem',
-            background: '#4caf50',
-            color: 'white',
-            border: 'none',
-            borderRadius: '8px',
-            fontWeight: 'bold',
-            cursor: 'pointer'
-          }}
-        >
-          Login
-        </button>
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <button
+            onClick={() => setAuthMode('login')}
+            style={{
+              padding: '0.5rem 1rem',
+              background: '#4caf50',
+              color: 'white',
+              border: 'none',
+              borderRadius: '8px',
+              fontWeight: 'bold',
+              cursor: 'pointer'
+            }}
+          >
+            Login
+          </button>
+        </div>
       )}
 
       {authMode && (
@@ -154,8 +178,80 @@ function ProfileMenu() {
             }}
           >
             <h2 style={{ color: '#72ffaf', textAlign: 'center', marginBottom: '1rem' }}>
-              Login
+              {authMode === 'signup' ? 'Sign Up' : 'Log In'}
             </h2>
+
+            <input
+              type="email"
+              value={email}
+              placeholder="Email"
+              onChange={e => setEmail(e.target.value)}
+              style={{
+                width: '100%', padding: '0.6rem',
+                marginBottom: '0.8rem', borderRadius: '8px',
+                border: '1px solid #444', background: '#2c2c2c', color: '#fff'
+              }}
+            />
+            <input
+              type="password"
+              value={password}
+              placeholder="Password"
+              onChange={e => setPassword(e.target.value)}
+              style={{
+                width: '100%', padding: '0.6rem',
+                marginBottom: '1rem', borderRadius: '8px',
+                border: '1px solid #444', background: '#2c2c2c', color: '#fff'
+              }}
+            />
+
+            {feedback && (
+              <div style={{ color: '#72ffaf', marginBottom: '0.8rem', fontSize: '0.95rem', textAlign: 'center' }}>
+                {feedback}
+              </div>
+            )}
+
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
+              <button
+                onClick={handleAuthSubmit}
+                style={{
+                  flex: 1,
+                  marginRight: '10px',
+                  padding: '0.7rem',
+                  background: '#4caf50',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  fontWeight: 'bold',
+                  fontSize: '1rem'
+                }}
+              >
+                {authMode === 'signup' ? 'Sign Up' : 'Log In'}
+              </button>
+
+              <button
+                onClick={() => setAuthMode(authMode === 'signup' ? 'login' : 'signup')}
+                style={{
+                  flex: 1,
+                  padding: '0.7rem',
+                  background: '#222',
+                  color: '#ccc',
+                  border: '1px solid #444',
+                  borderRadius: '8px',
+                  fontWeight: 'bold',
+                  fontSize: '1rem'
+                }}
+              >
+                {authMode === 'signup' ? 'Switch to Login' : 'Switch to Sign Up'}
+              </button>
+            </div>
+
+            <div style={{
+              marginTop: '1.5rem', marginBottom: '0.75rem', display: 'flex', alignItems: 'center'
+            }}>
+              <div style={{ flex: 1, height: '1px', backgroundColor: '#444' }}></div>
+              <span style={{ margin: '0 0.75rem', color: '#888', fontSize: '0.9rem' }}>or</span>
+              <div style={{ flex: 1, height: '1px', backgroundColor: '#444' }}></div>
+            </div>
 
             <button
               onClick={signInWithGoogle}
@@ -178,25 +274,6 @@ function ProfileMenu() {
               <img src="/google-icon.svg" alt="Google" style={{ width: '20px', height: '20px' }} />
               Continue with Google
             </button>
-
-            <p style={{ marginTop: '1rem', fontSize: '0.85rem', color: '#999', textAlign: 'center' }}>
-              You’ll be signed in or a new account will be created automatically.
-            </p>
-
-            <div style={{ marginTop: '1rem', textAlign: 'center' }}>
-              <button
-                onClick={closeModal}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  color: '#ccc',
-                  textDecoration: 'underline',
-                  cursor: 'pointer'
-                }}
-              >
-                Cancel
-              </button>
-            </div>
           </div>
 
           <style>
@@ -207,23 +284,6 @@ function ProfileMenu() {
               }
             `}
           </style>
-        </div>
-      )}
-
-      {feedback && (
-        <div style={{
-          position: 'absolute',
-          top: 60,
-          right: 0,
-          background: '#ffcc00',
-          color: 'black',
-          padding: '8px 12px',
-          borderRadius: '8px',
-          fontWeight: 'bold',
-          zIndex: 99999,
-          boxShadow: '0 0 10px rgba(0,0,0,0.2)'
-        }}>
-          {feedback}
         </div>
       )}
     </div>
