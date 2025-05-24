@@ -31,12 +31,8 @@ function App() {
         setTimeout(() => setAuthFeedback(''), 5000);
       }
 
-      const local = localStorage.getItem("termsAcceptedVersion");
-      if (local === CURRENT_TERMS_VERSION) {
-        setTermsAccepted(true);
-      } else {
-        setTermsAccepted(false);
-      }
+      // Always show TOS modal unless explicitly accepted this session
+      setTermsAccepted(false);
     };
 
     fetchUserAndSession();
@@ -74,7 +70,6 @@ function App() {
     if (user) {
       await supabase.auth.updateUser({ data: { termsAccepted: true, termsVersion: CURRENT_TERMS_VERSION } });
     }
-    localStorage.setItem("termsAcceptedVersion", CURRENT_TERMS_VERSION);
     setTermsAccepted(true);
   };
 
