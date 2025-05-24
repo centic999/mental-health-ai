@@ -14,6 +14,29 @@ function App() {
   const [authFeedback, setAuthFeedback] = useState('');
   const [termsAccepted, setTermsAccepted] = useState(false);
 
+  const CURRENT_TERMS_VERSION = '2025-05-24';
+
+useEffect(() => {
+  const fetchUserAndSession = async () => {
+    const { data: { session }, error } = await supabase.auth.getSession();
+    if (session?.user) {
+      const storedVersion = session.user.user_metadata?.termsVersion;
+      if (storedVersion !== CURRENT_TERMS_VERSION) {
+        setTermsAccepted(false);
+      } else {
+        setTermsAccepted(true);
+      }
+    } else {
+      const local = localStorage.getItem("termsAcceptedVersion");
+      if (local === CURRENT_TERMS_VERSION) setTermsAccepted(true);
+    }
+  };
+
+  fetchUserAndSession(); 
+}, []); 
+
+
+
   useEffect(() => {
     const fetchUserAndSession = async () => {
       const { data: { session }, error } = await supabase.auth.getSession();
@@ -31,9 +54,11 @@ function App() {
           setAuthFeedback('Welcome back!');
         }
 
-        if (session.user.user_metadata?.termsAccepted === true) {
+        const acceptedThisSession = sessionStorage.getItem('termsAccepted') === 'true';
+        if (session.user.user_metadata?.termsAccepted === true || acceptedThisSession) {
           setTermsAccepted(true);
         }
+
 
         setTimeout(() => setAuthFeedback(''), 5000);
       } else {
@@ -75,12 +100,14 @@ function App() {
 
   const handleAcceptTerms = async () => {
     if (user) {
-      await supabase.auth.updateUser({ data: { termsAccepted: true } });
+      await supabase.auth.updateUser({ data: { termsAccepted: true, termsVersion: CURRENT_TERMS_VERSION } });
     } else {
-      localStorage.setItem("termsAccepted", "true");
+      localStorage.setItem("termsAcceptedVersion", CURRENT_TERMS_VERSION);
     }
     setTermsAccepted(true);
   };
+  
+  
 
   const createNewChat = async () => {
     const id = uuidv4();
