@@ -287,9 +287,7 @@ async def chat(request: Request):
             )
 
             result = response.json()
-            print("Raw result:", result)
-            print("Text value:", result.get("text"))
-            ai_response = attach_disclaimer(result.get("text", "Sorry, something went wrong."))
+            ai_response = result.get("text", "Sorry, something went wrong.")
             return {"response": ai_response, "source": source}
 
 
@@ -321,7 +319,7 @@ async def fallback_openrouter(messages, user_input):
         if "choices" in result:
             print("Raw result:", result)
             print("Text value:", result.get("text"))
-            fallback_response = attach_disclaimer(result["choices"][0]["message"]["content"])
+            fallback_response = result["choices"][0]["message"]["content"]
             source = detect_topic(user_input)
             log_decision(user_input, "openrouter/mistral-7b", "fallback model", fallback_response)
             return {
