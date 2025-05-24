@@ -60,25 +60,19 @@ function ProfileMenu() {
   };
 
   const signInWithGoogle = async () => {
-    const win = window.open('', '_blank');
+    setFeedback("Redirecting to Google...");
     try {
-      const { data, error } = await supabase.auth.signInWithOAuth({
+      await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
           redirectTo: window.location.origin
         }
       });
-      if (error) {
-        setFeedback("⚠️ Google login failed. Try again.");
-        win?.close();
-      } else {
-        win.location.href = data?.url;
-      }
     } catch (err) {
       setFeedback("⚠️ Google login failed.");
-      win?.close();
     }
   };
+  
 
   const closeModal = () => {
     setAuthMode(null);
