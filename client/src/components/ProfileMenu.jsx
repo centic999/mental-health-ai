@@ -3,9 +3,7 @@ import { supabase } from '../supabaseClient';
 
 function ProfileMenu() {
   const [user, setUser] = useState(null);
-  const [authMode, setAuthMode] = useState(null); // "login" | "signup"
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [authOpen, setAuthOpen] = useState(false);
   const [feedback, setFeedback] = useState('');
   const [showDropdown, setShowDropdown] = useState(false);
   const modalRef = useRef(null);
@@ -18,65 +16,10 @@ function ProfileMenu() {
     fetchUser();
   }, []);
 
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (authMode && e.key === 'Escape') closeModal();
-      if (authMode && e.key === 'Enter') handleAuthSubmit();
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [authMode, email, password]);
-
   const handleLogout = async () => {
     await supabase.auth.signOut();
     window.location.reload();
   };
-
-  const handleAuthSubmit = async () => {
-    setFeedback('');
-    if (!email || !password) {
-      return setFeedback('Email and password required');
-    }
-  
-    if (authMode === 'login') {
-      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-  
-      if (error) {
-        if (error.message.toLowerCase().includes("invalid login credentials")) {
-          return setFeedback("❌ Invalid email or password.");
-        }
-        return setFeedback("❌ " + error.message);
-      }
-  
-      const user = data.user;
-      if (user && !user.confirmed_at) {
-        return setFeedback("📧 Please check your email to confirm your account.");
-      }
-  
-      window.location.reload();
-    }
-  
-    if (authMode === 'signup') {
-      // Check if account exists before signup
-      const { error: loginError } = await supabase.auth.signInWithPassword({ email, password });
-  
-      if (!loginError || (loginError && !loginError.message.toLowerCase().includes("invalid login credentials"))) {
-        // If no login error or it's not "invalid credentials", account exists
-        return setFeedback("⚠️ An account already exists with that email. Please log in.");
-      }
-  
-      // Proceed with signup if account truly doesn't exist
-      const { error: signUpError } = await supabase.auth.signUp({ email, password });
-  
-      if (signUpError) {
-        return setFeedback("❌ " + signUpError.message);
-      }
-  
-      return setFeedback("✅ Please check your email to confirm your account.");
-    }
-  };
-  
-  
 
   const signInWithGoogle = async () => {
     setFeedback("Redirecting to Google...");
@@ -91,9 +34,7 @@ function ProfileMenu() {
   };
 
   const closeModal = () => {
-    setAuthMode(null);
-    setEmail('');
-    setPassword('');
+    setAuthOpen(false);
     setFeedback('');
   };
 
@@ -148,25 +89,23 @@ function ProfileMenu() {
           )}
         </>
       ) : (
-        <div style={{ display: 'flex', gap: '10px' }}>
-          <button
-            onClick={() => setAuthMode('login')}
-            style={{
-              padding: '0.5rem 1rem',
-              background: '#4caf50',
-              color: 'white',
-              border: 'none',
-              borderRadius: '8px',
-              fontWeight: 'bold',
-              cursor: 'pointer'
-            }}
-          >
-            Login
-          </button>
-        </div>
+        <button
+          onClick={() => setAuthOpen(true)}
+          style={{
+            padding: '0.5rem 1rem',
+            background: '#4caf50',
+            color: 'white',
+            border: 'none',
+            borderRadius: '8px',
+            fontWeight: 'bold',
+            cursor: 'pointer'
+          }}
+        >
+          Login
+        </button>
       )}
 
-      {authMode && (
+      {authOpen && (
         <div
           onClick={closeModal}
           style={{
@@ -191,80 +130,14 @@ function ProfileMenu() {
             }}
           >
             <h2 style={{ color: '#72ffaf', textAlign: 'center', marginBottom: '1rem' }}>
-              {authMode === 'signup' ? 'Sign Up' : 'Log In'}
+              Log In
             </h2>
 
-            <input
-              type="email"
-              value={email}
-              placeholder="Email"
-              onChange={e => setEmail(e.target.value)}
-              style={{
-                width: '100%', padding: '0.6rem',
-                marginBottom: '0.8rem', borderRadius: '8px',
-                border: '1px solid #444', background: '#2c2c2c', color: '#fff'
-              }}
-            />
-            <input
-              type="password"
-              value={password}
-              placeholder="Password"
-              onChange={e => setPassword(e.target.value)}
-              style={{
-                width: '100%', padding: '0.6rem',
-                marginBottom: '1rem', borderRadius: '8px',
-                border: '1px solid #444', background: '#2c2c2c', color: '#fff'
-              }}
-            />
-
             {feedback && (
-              <div style={{ color: '#72ffaf', marginBottom: '0.8rem', fontSize: '0.95rem', textAlign: 'center' }}>
+              <div style={{ color: '#72ffaf', marginBottom: '1rem', fontSize: '0.95rem', textAlign: 'center' }}>
                 {feedback}
               </div>
             )}
-
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
-              <button
-                onClick={handleAuthSubmit}
-                style={{
-                  flex: 1,
-                  marginRight: '10px',
-                  padding: '0.7rem',
-                  background: '#4caf50',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '8px',
-                  fontWeight: 'bold',
-                  fontSize: '1rem'
-                }}
-              >
-                {authMode === 'signup' ? 'Sign Up' : 'Log In'}
-              </button>
-
-              <button
-                onClick={() => setAuthMode(authMode === 'signup' ? 'login' : 'signup')}
-                style={{
-                  flex: 1,
-                  padding: '0.7rem',
-                  background: '#222',
-                  color: '#ccc',
-                  border: '1px solid #444',
-                  borderRadius: '8px',
-                  fontWeight: 'bold',
-                  fontSize: '1rem'
-                }}
-              >
-                {authMode === 'signup' ? 'Switch to Login' : 'Switch to Sign Up'}
-              </button>
-            </div>
-
-            <div style={{
-              marginTop: '1.5rem', marginBottom: '0.75rem', display: 'flex', alignItems: 'center'
-            }}>
-              <div style={{ flex: 1, height: '1px', backgroundColor: '#444' }}></div>
-              <span style={{ margin: '0 0.75rem', color: '#888', fontSize: '0.9rem' }}>or</span>
-              <div style={{ flex: 1, height: '1px', backgroundColor: '#444' }}></div>
-            </div>
 
             <button
               onClick={signInWithGoogle}
@@ -281,17 +154,31 @@ function ProfileMenu() {
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: '10px',
-                marginTop: '0.5rem'
+                marginBottom: '1rem'
               }}
             >
               <img src="/google-icon.svg" alt="Google" style={{ width: '20px', height: '20px' }} />
               Continue with Google
             </button>
 
-            <p style={{ color: '#888', fontSize: '0.85rem', marginTop: '1.25rem', textAlign: 'center' }}>
-              Email and password accounts require Login or Sign Up to be chosen manually.<br />
-              Google will automatically log you in or create an account.
+            <p style={{ fontSize: '0.85rem', textAlign: 'center', color: '#aaa', marginTop: '1rem' }}>
+              Google will automatically create a new account or sign you in if one exists. Confirmation may be required via email.
             </p>
+
+            <div style={{ marginTop: '1.5rem', textAlign: 'center' }}>
+              <button
+                onClick={closeModal}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: '#ccc',
+                  textDecoration: 'underline',
+                  cursor: 'pointer'
+                }}
+              >
+                Cancel
+              </button>
+            </div>
           </div>
 
           <style>
