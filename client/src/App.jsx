@@ -106,10 +106,23 @@ function App() {
   };
   
 
-  const deleteChat = (id) => {
+  const deleteChat = async (id) => {
     setChats((prev) => prev.filter((chat) => chat.id !== id));
     if (activeChatId === id) setActiveChatId(null);
+  
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+  
+    const { error } = await supabase
+      .from('chats')
+      .delete()
+      .eq('id', id)
+      .eq('user_id', user.id);
+  
+    if (error) console.error("❌ Failed to delete chat from Supabase:", error.message);
+    else console.log("✅ Chat deleted from Supabase");
   };
+  
 
   const renameChat = (id, newTitle) => {
     setChats((prev) =>
