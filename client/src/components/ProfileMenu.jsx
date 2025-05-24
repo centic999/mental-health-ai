@@ -54,36 +54,19 @@ function ProfileMenu() {
     }
   };
 
-  const signInWithGoogle = () => {
-    const popup = window.open('', 'GoogleSignIn', 'width=500,height=600');
-  
-    supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: window.location.href,
-        queryParams: {
-          access_type: 'offline',
-          prompt: 'select_account'
+  const signInWithGoogle = async () => {
+    try {
+      await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: window.location.origin // or a custom callback page
         }
-      }
-    }).then(({ error }) => {
-      if (error) {
-        popup?.close();
-        if (error.message.includes("user already registered")) {
-          setFeedback("⚠️ This email already has an account. Try logging in.");
-        } else if (error.message.includes("invalid")) {
-          setFeedback("⚠️ Invalid Google account. Try a different one.");
-        } else {
-          setFeedback(`Google login error: ${error.message}`);
-        }
-      } else {
-        setFeedback("✅ Google login successful. If you're signing up, check your email to confirm.");
-      }
-    }).catch((err) => {
-      popup?.close();
-      setFeedback("Unexpected error during Google login");
-    });
+      });
+    } catch (err) {
+      setFeedback("⚠️ Google login failed. Try again.");
+    }
   };
+  
   
   
 

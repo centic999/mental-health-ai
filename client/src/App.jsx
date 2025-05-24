@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Sidebar from './Sidebar';
 import Chat from './Chat';
 import { supabase } from './supabaseClient';
-import ProfileMenu from './components/ProfileMenu'; 
+import ProfileMenu from './components/ProfileMenu';
 import { v4 as uuidv4 } from 'uuid';
 
 function App() {
@@ -10,22 +10,36 @@ function App() {
   const [activeChatId, setActiveChatId] = useState(null);
   const [consentGiven, setConsentGiven] = useState(false);
   const [user, setUser] = useState(null);
+  const [authFeedback, setAuthFeedback] = useState('');
 
   useEffect(() => {
-    const fetchUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      setUser(user);
-    };
-    fetchUser();
-  
-    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
+    const fetchUserAndSession = async () => {
+      const {
+        data: { session },
+        error
+      } = await supabase.auth.getSession();
+
+      if (error) {
+        setAuthFeedback('This Google account isn’t linked yet.');
+        setTimeout(() => setAuthFeedback(''), 5000);
+        return;
+      }
+
       if (session?.user) {
         setUser(session.user);
+
+        if (!session.user.confirmed_at) {
+          setAuthFeedback('Please check your email to confirm your account.');
+        } else {
+          setAuthFeedback('Welcome back!');
+        }
+
+        setTimeout(() => setAuthFeedback(''), 5000);
       }
-    });
-    return () => authListener?.subscription?.unsubscribe();
+    };
+
+    fetchUserAndSession();
   }, []);
-  
 
   useEffect(() => {
     const loadChats = async () => {
@@ -34,95 +48,85 @@ function App() {
         console.warn("Not logged in. Skipping chat load.");
         return;
       }
-    
+
       const { data, error } = await supabase
         .from('chats')
         .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
-    
+
       if (error) {
         console.error("Error loading chats:", error.message);
         return;
       }
-    
-      // Normalize chats
+
       const normalizedChats = data.map((chat) => ({
         id: chat.id,
         title: chat.title || "New Chat",
         messages: Array.isArray(chat.messages) ? chat.messages : [],
       }));
-    
+
       console.log("✅ Loaded and normalized chats:", normalizedChats);
       setChats(normalizedChats);
-    };    
+    };
 
     loadChats();
   }, []);
 
   const createNewChat = async () => {
-    const id = uuidv4(); 
+    const id = uuidv4();
     const newChat = {
       id,
       title: "New Chat",
       messages: []
     };
-  
+
     setChats((prev) => [newChat, ...prev]);
     setActiveChatId(id);
-  
+
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
-  
+
     const { error } = await supabase.from('chats').upsert({
       id: id,
       user_id: user.id,
       title: newChat.title,
       messages: []
     });
-  
+
     if (error) {
       console.error("❌ Failed to save new chat:", error.message);
     } else {
       console.log("✅ Chat saved to Supabase");
     }
   };
-  
-  
-  
 
   const saveChat = async (chat) => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
-  
+
     const { error } = await supabase.from('chats').upsert({
       id: chat.id,
       user_id: user.id,
       title: chat.title,
       messages: chat.messages || [],
     });
-  
+
     if (error) console.error("Error saving chat:", error.message);
   };
-  
 
   const deleteChat = async (id) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      const { error } = await supabase.from('chats').delete().eq('id', id).eq('user_id', user.id);
+      if (error) {
+        console.error("❌ Failed to delete chat from Supabase:", error.message);
+      }
+    }
+
     setChats((prev) => prev.filter((chat) => chat.id !== id));
     if (activeChatId === id) setActiveChatId(null);
-  
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
-  
-    const { error } = await supabase
-      .from('chats')
-      .delete()
-      .eq('id', id)
-      .eq('user_id', user.id);
-  
-    if (error) console.error("❌ Failed to delete chat from Supabase:", error.message);
-    else console.log("✅ Chat deleted from Supabase");
   };
-  
 
   const renameChat = (id, newTitle) => {
     setChats((prev) =>
@@ -136,7 +140,6 @@ function App() {
       })
     );
   };
-  
 
   const selectChat = (id) => setActiveChatId(id);
 
@@ -221,7 +224,7 @@ function App() {
 
   return (
     <div style={{ display: 'flex', height: '100vh', width: '100vw', overflow: 'hidden' }}>
-      <ProfileMenu /> {/* NEW Profile Button */}
+      <ProfileMenu />
       <div style={{ width: '250px', background: '#111' }}>
         <Sidebar
           chats={chats}
@@ -233,7 +236,25 @@ function App() {
         />
       </div>
 
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', position: 'relative' }}>
+        {authFeedback && (
+          <div style={{
+            position: 'absolute',
+            top: 10,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            background: '#ffcc00',
+            color: 'black',
+            padding: '10px 20px',
+            borderRadius: '8px',
+            fontWeight: 'bold',
+            zIndex: 9999,
+            animation: 'fadeSlideDown 0.3s ease-out'
+          }}>
+            {authFeedback}
+          </div>
+        )}
+
         {activeChat ? (
           <Chat chat={activeChat} updateChat={updateChat} />
         ) : (
