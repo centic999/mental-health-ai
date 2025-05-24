@@ -13,7 +13,6 @@ const formatAiMessage = (text) => {
   return <ul style={{ paddingLeft: '1.5rem' }}>{formatted}</ul>;
 };
 
-// 1. Massive Crisis Phrase Library
 const crisisKeywords = [
   'suicide', 'kill myself', 'want to die', 'self harm', 'self-harm',
   'cutting', 'cut myself', 'bleed', 'can’t go on', 'i give up',
@@ -72,7 +71,6 @@ function Chat({ chat, updateChat }) {
         }, 4600);
       }
 
-      // 2. CRISIS DETECTION
       if (isCrisisMessage(input)) {
         const warningMsg = `🚨 It sounds like you may be going through something serious. Please don’t go through this alone.
 
@@ -95,7 +93,12 @@ Please reach out to one of these numbers or talk to someone you trust. You're no
       });
 
       const reply = res.data?.response || "Sorry, I didn’t get that. Try again.";
-      const updatedMessages = [...newMessages, { role: 'assistant', content: reply }];
+      const source = res.data?.source || null;
+      const updatedMessages = [...newMessages, {
+        role: 'assistant',
+        content: reply,
+        source: source
+      }];
       updateChat(chat.id, updatedMessages);
 
       if (user) await saveChat(chat.id, chat.title, updatedMessages);
@@ -147,7 +150,6 @@ Please reach out to one of these numbers or talk to someone you trust. You're no
         `}
       </style>
 
-      {/* Title */}
       <div style={{
         position: 'sticky', top: 0, background: '#1e1e1e',
         padding: '1rem 2rem', borderBottom: '1px solid #333',
@@ -161,7 +163,6 @@ Please reach out to one of these numbers or talk to someone you trust. You're no
         </h1>
       </div>
 
-      {/* Messages */}
       <div style={{ flex: 1, overflowY: 'auto', padding: '1rem 2rem', marginBottom: '1rem' }}>
         {chat.messages.map((msg, i) => (
           <div key={i} style={{ width: '100%' }}>
@@ -179,6 +180,13 @@ Please reach out to one of these numbers or talk to someone you trust. You're no
               <div style={{ marginTop: '0.5rem' }}>
                 {msg.role === 'assistant' ? formatAiMessage(msg.content) : msg.content}
               </div>
+              {msg.source && msg.role === 'assistant' && (
+                <div style={{ marginTop: '0.75rem', fontSize: '0.9rem', color: '#aaffdd' }}>
+                  Source: <a href={msg.source.url} target="_blank" rel="noopener noreferrer" style={{ color: '#b3f7cc', textDecoration: 'underline' }}>
+                    {msg.source.title} ({msg.source.provider})
+                  </a>
+                </div>
+              )}
             </div>
           </div>
         ))}
@@ -201,7 +209,6 @@ Please reach out to one of these numbers or talk to someone you trust. You're no
         <div ref={chatEndRef} />
       </div>
 
-      {/* Input */}
       <div style={{ padding: '1rem 2rem', borderTop: '1px solid #333', display: 'flex', gap: '10px' }}>
         <textarea
           rows={2}
