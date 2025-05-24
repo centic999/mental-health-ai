@@ -34,40 +34,56 @@ function ProfileMenu() {
 
   const handleAuthSubmit = async () => {
     setFeedback('');
-    if (!email || !password) return setFeedback('Email and password required');
-
+    if (!email || !password) {
+      return setFeedback('Email and password required');
+    }
+  
     if (authMode === 'signup') {
-      // First, attempt sign up directly
-      const { data, error } = await supabase.auth.signUp({ email, password });
-    
-      if (error) {
-        if (error.message.toLowerCase().includes("user already registered")) {
+      // Step 1: Try to log in first to check if user exists
+      const { data: loginCheck, error: loginError } = await supabase.auth.signInWithPassword({ email, password });
+  
+      if (loginCheck?.user) {
+        if (!loginCheck.user.confirmed_at) {
+          return setFeedback("📧 This account already exists but hasn't been confirmed. Please check your email.");
+        } else {
           return setFeedback("⚠️ An account already exists with that email. Please log in.");
         }
-        return setFeedback("❌ " + error.message);
       }
-    
-      return setFeedback("✅ Please check your email to confirm your account.");
+  
+      // Step 2: If login fails due to invalid creds, proceed with signup
+      if (loginError?.message.toLowerCase().includes("invalid login credentials")) {
+        const { data: signUpData, error: signUpError } = await supabase.auth.signUp({ email, password });
+  
+        if (signUpError) {
+          return setFeedback("❌ " + signUpError.message);
+        }
+  
+        return setFeedback("✅ Please check your email to confirm your account.");
+      }
+  
+      // Catch-all error
+      return setFeedback("❌ " + (loginError?.message || 'Signup failed.'));
     }
-       
-
+  
     if (authMode === 'login') {
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+  
       if (error) {
         if (error.message.toLowerCase().includes("invalid login credentials")) {
           return setFeedback("⚠️ Account not found. Please sign up.");
         }
         return setFeedback("❌ " + error.message);
       }
-
+  
       const user = data.user;
       if (user && !user.confirmed_at) {
         return setFeedback("📧 Please check your email to confirm your account.");
       }
-
+  
       window.location.reload();
     }
   };
+  
 
   const signInWithGoogle = async () => {
     setFeedback("Redirecting to Google...");
