@@ -182,7 +182,7 @@ CITATION_MAP_EXPANDED = {
 
 def detect_topic(user_input):
     text = user_input.lower()
-    for keyword_group, source in CITATION_MAP_EXPANDED.items():
+    for keyword_group, source in CITATION_MAP_EXPANDED.items(): 
         if any(kw.strip() in text for kw in keyword_group.split("|")):
             return source
     return None
