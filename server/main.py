@@ -182,21 +182,10 @@ CITATION_MAP_EXPANDED = {
 
 def detect_topic(user_input):
     text = user_input.lower()
-    for keyword_group, source in CITATION_MAP.items():
+    for keyword_group, source in CITATION_MAP_EXPANDED.items():
         if any(kw.strip() in text for kw in keyword_group.split("|")):
             return source
     return None
-
-DISCLAIMER = (
-    "\n\n🩺 Please consult a licensed healthcare provider before making any decisions based on this information.\n"
-    "⚠️ Disclaimer: This AI is for informational support only. It does not provide medical diagnosis or treatment. "
-    "Always consult a licensed healthcare professional. We are not liable for decisions made based on this conversation."
-)
-
-
-def attach_disclaimer(text):
-    return text.strip() + DISCLAIMER
-
 
 # === APP SETUP ===
 app = FastAPI()
